@@ -137,7 +137,7 @@ async def call_gemini_with_peer_response(peer_response: str, peer_prompt: str) -
     return response.text
 
 
-async def process_exam(audio: bytes, video: bytes) -> tuple[str, str]:
+async def process_exam(audio: bytes, video: bytes) -> int:
     """
     Process the exam audio and video through Claude and Gemini.
     
@@ -145,7 +145,7 @@ async def process_exam(audio: bytes, video: bytes) -> tuple[str, str]:
     1. Read prompts from files
     2. Send files + system prompt to Claude and Gemini
     3. Exchange responses using peer_response_prompt
-    4. Return final responses from both models
+    4. Extract grades from both final responses and average them
     """
     # Step 1: Read prompts
     system_prompt = read_prompt("system_prompt.txt")
@@ -166,5 +166,38 @@ async def process_exam(audio: bytes, video: bytes) -> tuple[str, str]:
         gemini_initial_response, peer_response_prompt
     )
     
-    # Step 4: Return final responses
-    return claude_final_response, gemini_final_response
+    # Step 4: Extract grades and compute average
+    claude_grade = await convert_report_to_int(claude_final_response)
+    gemini_grade = await convert_report_to_int(gemini_final_response)
+    
+    average_grade = round((claude_grade + gemini_grade) / 2)
+    
+    return average_grade
+
+
+async def convert_report_to_int(report: str) -> int:
+    """
+    Extract the integer grade from a full review report using Gemini Flash 2.0.
+    
+    Args:
+        report: A full review text that contains a final score somewhere in it.
+        
+    Returns:
+        The single integer grade found in the report.
+    """
+    model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction=read_prompt("report_to_int_prompt.txt"),
+    )
+    
+    prompt = f"Extract the final grade/score from this review and return only the integer:\n\n{report}"
+    
+    # Run sync Gemini call in thread pool to maintain async compatibility
+    response = await asyncio.to_thread(
+        model.generate_content,
+        prompt,
+    )
+    
+    # Parse the response to get the integer
+    grade_text = response.text.strip()
+    return int(grade_text)
