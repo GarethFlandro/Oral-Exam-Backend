@@ -1,9 +1,18 @@
-import os
+import base64
+import asyncio
 from pathlib import Path
+
+import anthropic
+import google.generativeai as genai
+
 from config.api_keys import CLAUDE_API_KEY, GEMINI_API_KEY
 
 # Path to prompts directory
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+
+# Initialize clients
+claude_client = anthropic.AsyncAnthropic(api_key=CLAUDE_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
 
 
 def read_prompt(filename: str) -> str:
@@ -13,41 +22,119 @@ def read_prompt(filename: str) -> str:
         return f.read()
 
 
-# Mock AI client functions (replace with real SDK calls later)
+def encode_to_base64(data: bytes) -> str:
+    """Encode bytes to base64 string."""
+    return base64.standard_b64encode(data).decode("utf-8")
+
+
 async def call_claude(audio: bytes, video: bytes, system_prompt: str) -> str:
     """
-    Mock Claude API call.
-    Replace with actual Anthropic SDK integration.
+    Call Claude API with audio and video content.
+    Claude supports audio natively; video is sent as a note since Claude doesn't support video directly.
     """
-    # TODO: Implement real Claude API call
-    return "Mock Claude initial response"
+    audio_b64 = encode_to_base64(audio)
+    
+    message = await claude_client.messages.create(
+        model="claude-opus-4-5-20251101",
+        max_tokens=4096,
+        system=system_prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "document",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "audio/webm",
+                            "data": audio_b64,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": "Please analyze this audio recording from an oral exam. Note: A video file was also provided but cannot be processed directly.",
+                    },
+                ],
+            }
+        ],
+    )
+    
+    return message.content[0].text
 
 
 async def call_gemini(audio: bytes, video: bytes, system_prompt: str) -> str:
     """
-    Mock Gemini API call.
-    Replace with actual Google Generative AI SDK integration.
+    Call Gemini API with audio and video content.
+    Gemini supports multimodal input including audio and video.
     """
-    # TODO: Implement real Gemini API call
-    return "Mock Gemini initial response"
+    model = genai.GenerativeModel(
+        model_name="gemini-3-pro-preview",
+        system_instruction=system_prompt,
+    )
+    
+    # Create inline data parts for audio and video
+    audio_part = {
+        "inline_data": {
+            "mime_type": "audio/webm",
+            "data": encode_to_base64(audio),
+        }
+    }
+    
+    video_part = {
+        "inline_data": {
+            "mime_type": "video/mp4",
+            "data": encode_to_base64(video),
+        }
+    }
+    
+    prompt_text = "Please analyze this audio and video recording from an oral exam."
+    
+    # Run sync Gemini call in thread pool to maintain async compatibility
+    response = await asyncio.to_thread(
+        model.generate_content,
+        [audio_part, video_part, prompt_text],
+    )
+    
+    return response.text
 
 
 async def call_claude_with_peer_response(peer_response: str, peer_prompt: str) -> str:
     """
-    Mock Claude API call with peer response.
-    Replace with actual Anthropic SDK integration.
+    Call Claude API to review and respond to the peer model's (Gemini's) response.
     """
-    # TODO: Implement real Claude API call with peer response
-    return "Mock Claude final response after reviewing Gemini's input"
+    message = await claude_client.messages.create(
+        model="claude-opus-4-5-20251101",
+        max_tokens=4096,
+        system=peer_prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input.",
+            }
+        ],
+    )
+    
+    return message.content[0].text
 
 
 async def call_gemini_with_peer_response(peer_response: str, peer_prompt: str) -> str:
     """
-    Mock Gemini API call with peer response.
-    Replace with actual Google Generative AI SDK integration.
+    Call Gemini API to review and respond to the peer model's (Claude's) response.
     """
-    # TODO: Implement real Gemini API call with peer response
-    return "Mock Gemini final response after reviewing Claude's input"
+    model = genai.GenerativeModel(
+        model_name="gemini-3-pro-preview",
+        system_instruction=peer_prompt,
+    )
+    
+    prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input."
+    
+    # Run sync Gemini call in thread pool to maintain async compatibility
+    response = await asyncio.to_thread(
+        model.generate_content,
+        prompt,
+    )
+    
+    return response.text
 
 
 async def process_exam(audio: bytes, video: bytes) -> tuple[str, str]:
