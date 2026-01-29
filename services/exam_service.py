@@ -27,10 +27,9 @@ def encode_to_base64(data: bytes) -> str:
     return base64.standard_b64encode(data).decode("utf-8")
 
 
-async def call_claude(audio: bytes, video: bytes, system_prompt: str) -> str:
+async def call_claude(audio: bytes, system_prompt: str) -> str:
     """
-    Call Claude API with audio and video content.
-    Claude supports audio natively; video is sent as a note since Claude doesn't support video directly.
+    Call Claude API with audio content.
     """
     audio_b64 = encode_to_base64(audio)
     
@@ -52,7 +51,7 @@ async def call_claude(audio: bytes, video: bytes, system_prompt: str) -> str:
                     },
                     {
                         "type": "text",
-                        "text": "Please analyze this audio recording from an oral exam. Note: A video file was also provided but cannot be processed directly.",
+                        "text": "Please analyze this audio recording from an oral exam.",
                     },
                 ],
             }
@@ -62,17 +61,16 @@ async def call_claude(audio: bytes, video: bytes, system_prompt: str) -> str:
     return message.content[0].text
 
 
-async def call_gemini(audio: bytes, video: bytes, system_prompt: str) -> str:
+async def call_gemini(audio: bytes, system_prompt: str) -> str:
     """
-    Call Gemini API with audio and video content.
-    Gemini supports multimodal input including audio and video.
+    Call Gemini API with audio content.
     """
     model = genai.GenerativeModel(
         model_name="gemini-3-pro-preview",
         system_instruction=system_prompt,
     )
     
-    # Create inline data parts for audio and video
+    # Create inline data part for audio
     audio_part = {
         "inline_data": {
             "mime_type": "audio/webm",
@@ -80,19 +78,12 @@ async def call_gemini(audio: bytes, video: bytes, system_prompt: str) -> str:
         }
     }
     
-    video_part = {
-        "inline_data": {
-            "mime_type": "video/mp4",
-            "data": encode_to_base64(video),
-        }
-    }
-    
-    prompt_text = "Please analyze this audio and video recording from an oral exam."
+    prompt_text = "Please analyze this audio recording from an oral exam."
     
     # Run sync Gemini call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
         model.generate_content,
-        [audio_part, video_part, prompt_text],
+        [audio_part, prompt_text],
     )
     
     return response.text
@@ -137,13 +128,13 @@ async def call_gemini_with_peer_response(peer_response: str, peer_prompt: str) -
     return response.text
 
 
-async def process_exam(audio: bytes, video: bytes) -> int:
+async def process_exam(audio: bytes) -> int:
     """
-    Process the exam audio and video through Claude and Gemini.
+    Process the exam audio through Claude and Gemini.
     
     Steps:
     1. Read prompts from files
-    2. Send files + system prompt to Claude and Gemini
+    2. Send audio + system prompt to Claude and Gemini
     3. Exchange responses using peer_response_prompt
     4. Extract grades from both final responses and average them
     """
@@ -151,17 +142,17 @@ async def process_exam(audio: bytes, video: bytes) -> int:
     system_prompt = read_prompt("system_prompt.txt")
     peer_response_prompt = read_prompt("peer_response_prompt.txt")
     
-    # Step 2: Send files + system prompt to both AI clients
-    claude_initial_response = await call_claude(audio, video, system_prompt)
-    gemini_initial_response = await call_gemini(audio, video, system_prompt)
+    # Step 2: Send audio + system prompt to both AI clients
+    claude_initial_response = await call_claude(audio, system_prompt)
+    gemini_initial_response = await call_gemini(audio, system_prompt)
     
     # Step 3: Exchange responses - send each model's response to the other
-    # Send Claude's response to Gemini with peer_response_prompt
+    #   Send Claude's response to Gemini with peer_response_prompt
     gemini_final_response = await call_gemini_with_peer_response(
         claude_initial_response, peer_response_prompt
     )
     
-    # Send Gemini's response to Claude with peer_response_prompt
+    #   Send Gemini's response to Claude with peer_response_prompt
     claude_final_response = await call_claude_with_peer_response(
         gemini_initial_response, peer_response_prompt
     )
@@ -192,7 +183,7 @@ async def convert_report_to_int(report: str) -> int:
     
     prompt = f"Extract the final grade/score from this review and return only the integer:\n\n{report}"
     
-    # Run sync Gemini call in thread pool to maintain async compatibility
+    # Run sync Gemini call in thread pool to maintain async compatibility (puts it in another thread so the main program can continue in the current one)
     response = await asyncio.to_thread(
         model.generate_content,
         prompt,
