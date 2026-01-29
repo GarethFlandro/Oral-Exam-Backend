@@ -128,9 +128,13 @@ async def call_gemini_with_peer_response(peer_response: str, peer_prompt: str) -
     return response.text
 
 
-async def process_exam(audio: bytes) -> int:
+async def process_exam(audio: bytes, class_name: str) -> int:
     """
     Process the exam audio through Claude and Gemini.
+    
+    Args:
+        audio: The audio bytes from the oral exam recording
+        class_name: The name of the class being taught
     
     Steps:
     1. Read prompts from files
@@ -140,6 +144,7 @@ async def process_exam(audio: bytes) -> int:
     """
     # Step 1: Read prompts
     system_prompt = read_prompt("system_prompt.txt")
+    system_prompt = system_prompt.replace("{class_name}", class_name)
     peer_response_prompt = read_prompt("peer_response_prompt.txt")
     
     # Step 2: Send audio + system prompt to both AI clients
