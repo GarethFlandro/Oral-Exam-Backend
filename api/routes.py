@@ -11,8 +11,8 @@ async def analyze(audio: UploadFile = File(...), video: UploadFile = File(...)) 
     and returns the averaged grade from both models.
     """
     audio_bytes = await audio.read()
-    video_bytes = await video.read()
+    video_bytes = await video.read()  # Video stored but not currently used
     
-    average_grade = await process_exam(audio_bytes, video_bytes)
+    average_grade = await process_exam(audio_bytes)
     
     return average_grade
