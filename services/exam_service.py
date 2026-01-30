@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 
 import anthropic
-import google.generativeai as genai
+from google import genai
 
 from config.api_keys import CLAUDE_API_KEY, GEMINI_API_KEY
 
@@ -12,7 +12,7 @@ PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
 # Initialize clients
 claude_client = anthropic.AsyncAnthropic(api_key=CLAUDE_API_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 def read_prompt(filename: str) -> str:
@@ -32,7 +32,7 @@ async def call_claude(audio: bytes, system_prompt: str) -> str:
     Call Claude API with audio content.
     """
     audio_b64 = encode_to_base64(audio)
-    
+
     message = await claude_client.messages.create(
         model="claude-opus-4-5-20251101",
         max_tokens=4096,
@@ -57,7 +57,7 @@ async def call_claude(audio: bytes, system_prompt: str) -> str:
             }
         ],
     )
-    
+
     return message.content[0].text
 
 
@@ -65,27 +65,24 @@ async def call_gemini(audio: bytes, system_prompt: str) -> str:
     """
     Call Gemini API with audio content.
     """
-    model = genai.GenerativeModel(
-        model_name="gemini-3-pro-preview",
-        system_instruction=system_prompt,
-    )
-    
     # Create inline data part for audio
-    audio_part = {
-        "inline_data": {
-            "mime_type": "audio/webm",
-            "data": encode_to_base64(audio),
-        }
-    }
-    
+    audio_part = genai.types.Part.from_bytes(
+        data=audio,
+        mime_type="audio/webm",
+    )
+
     prompt_text = "Please analyze this audio recording from an oral exam."
-    
+
     # Run sync Gemini call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
-        model.generate_content,
-        [audio_part, prompt_text],
+        gemini_client.models.generate_content,
+        model="gemini-3-pro-preview",
+        contents=[audio_part, prompt_text],
+        config=genai.types.GenerateContentConfig(
+            system_instruction=system_prompt,
+        ),
     )
-    
+
     return response.text
 
 
@@ -104,7 +101,7 @@ async def call_claude_with_peer_response(peer_response: str, peer_prompt: str) -
             }
         ],
     )
-    
+
     return message.content[0].text
 
 
@@ -112,30 +109,29 @@ async def call_gemini_with_peer_response(peer_response: str, peer_prompt: str) -
     """
     Call Gemini API to review and respond to the peer model's (Claude's) response.
     """
-    model = genai.GenerativeModel(
-        model_name="gemini-3-pro-preview",
-        system_instruction=peer_prompt,
-    )
-    
     prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input."
-    
+
     # Run sync Gemini call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
-        model.generate_content,
-        prompt,
+        gemini_client.models.generate_content,
+        model="gemini-3-pro-preview",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=peer_prompt,
+        ),
     )
-    
+
     return response.text
 
 
 async def process_exam(audio: bytes, class_name: str) -> int:
     """
     Process the exam audio through Claude and Gemini.
-    
+
     Args:
         audio: The audio bytes from the oral exam recording
         class_name: The name of the class being taught
-    
+
     Steps:
     1. Read prompts from files
     2. Send audio + system prompt to Claude and Gemini
@@ -146,54 +142,53 @@ async def process_exam(audio: bytes, class_name: str) -> int:
     system_prompt = read_prompt("system_prompt.txt")
     system_prompt = system_prompt.replace("{class_name}", class_name)
     peer_response_prompt = read_prompt("peer_response_prompt.txt")
-    
+
     # Step 2: Send audio + system prompt to both AI clients
     claude_initial_response = await call_claude(audio, system_prompt)
     gemini_initial_response = await call_gemini(audio, system_prompt)
-    
+
     # Step 3: Exchange responses - send each model's response to the other
     #   Send Claude's response to Gemini with peer_response_prompt
     gemini_final_response = await call_gemini_with_peer_response(
         claude_initial_response, peer_response_prompt
     )
-    
+
     #   Send Gemini's response to Claude with peer_response_prompt
     claude_final_response = await call_claude_with_peer_response(
         gemini_initial_response, peer_response_prompt
     )
-    
+
     # Step 4: Extract grades and compute average
     claude_grade = await convert_report_to_int(claude_final_response)
     gemini_grade = await convert_report_to_int(gemini_final_response)
-    
+
     average_grade = round((claude_grade + gemini_grade) / 2)
-    
+
     return average_grade
 
 
 async def convert_report_to_int(report: str) -> int:
     """
     Extract the integer grade from a full review report using Gemini Flash 2.0.
-    
+
     Args:
         report: A full review text that contains a final score somewhere in it.
-        
+
     Returns:
         The single integer grade found in the report.
     """
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=read_prompt("report_to_int_prompt.txt"),
-    )
-    
     prompt = f"Extract the final grade/score from this review and return only the integer:\n\n{report}"
-    
+
     # Run sync Gemini call in thread pool to maintain async compatibility (puts it in another thread so the main program can continue in the current one)
     response = await asyncio.to_thread(
-        model.generate_content,
-        prompt,
+        gemini_client.models.generate_content,
+        model="gemini-2.0-flash",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=read_prompt("report_to_int_prompt.txt"),
+        ),
     )
-    
+
     # Parse the response to get the integer
     grade_text = response.text.strip()
     return int(grade_text)
