@@ -1,17 +1,27 @@
 import asyncio
-import json
+import base64
+import logging
 from pathlib import Path
-from dataclasses import dataclass
 
-from google import genai
+import anthropic
+import google.genai as genai
 
-from config.api_keys import GEMINI_API_KEY
+from config.api_keys import CLAUDE_API_KEY, GEMINI_API_KEY
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 # Path to prompts directory
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
 # Initialize client
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+claude_client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 
 
 def read_prompt(filename: str) -> str:
@@ -36,6 +46,7 @@ async def call_gemini(
         mime_type: MIME type of the audio file
         temperature: Sampling temperature (higher = more creative)
     """
+    logger.info("[Gemini] Starting audio analysis...")
     # Create inline data part for audio
     audio_part = genai.types.Part.from_bytes(
         data=audio,
@@ -45,6 +56,7 @@ async def call_gemini(
     prompt_text = "Please analyze this audio recording from an oral exam."
 
     # Run sync Gemini call in thread pool to maintain async compatibility
+    logger.info("[Gemini] Sending request to gemini-3-pro-preview...")
     response = await asyncio.to_thread(
         gemini_client.models.generate_content,
         model="gemini-3-pro-preview",
@@ -55,6 +67,7 @@ async def call_gemini(
         ),
     )
 
+    logger.info(f"[Gemini] Analysis complete ({len(response.text)} characters)")
     return response.text
 
 
@@ -69,6 +82,7 @@ async def call_gemini_with_peer_response(
         peer_prompt: System instruction for the review
         temperature: Sampling temperature (higher = more creative)
     """
+    logger.info("[Gemini] Starting peer review of Claude's response...")
     prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input."
 
     # Run sync Gemini call in thread pool to maintain async compatibility
@@ -82,14 +96,97 @@ async def call_gemini_with_peer_response(
         ),
     )
 
+    logger.info(f"[Gemini] Peer review complete ({len(response.text)} characters)")
     return response.text
+
+
+async def call_claude(
+    audio: bytes,
+    system_prompt: str,
+    mime_type: str = "audio/webm",
+) -> str:
+    """
+    Call Claude API with audio content.
+
+    Args:
+        audio: Audio bytes to analyze
+        system_prompt: System instruction for the model
+        mime_type: MIME type of the audio file
+    """
+    logger.info("[Claude] Starting audio analysis...")
+    # Encode audio as base64 for Claude
+    audio_base64 = base64.standard_b64encode(audio).decode("utf-8")
+
+    prompt_text = "Please analyze this audio recording from an oral exam."
+
+    # Run Claude call in thread pool to maintain async compatibility
+    logger.info("[Claude] Sending request to claude-4-5-opus...")
+    response = await asyncio.to_thread(
+        claude_client.messages.create,
+        model="claude-4-5-opus-20260131",
+        max_tokens=8192,
+        system=system_prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_text,
+                    },
+                    {
+                        "type": "file",
+                        "source": {
+                            "type": "base64",
+                            "media_type": mime_type,
+                            "data": audio_base64,
+                        },
+                    },
+                ],
+            }
+        ],
+    )
+
+    logger.info(f"[Claude] Analysis complete ({len(response.content[0].text)} characters)")
+    return response.content[0].text
+
+
+async def call_claude_with_peer_response(
+    peer_response: str, peer_prompt: str
+) -> str:
+    """
+    Call Claude API to review and respond to the peer model's response.
+
+    Args:
+        peer_response: The other model's analysis
+        peer_prompt: System instruction for the review
+    """
+    logger.info("[Claude] Starting peer review of Gemini's response...")
+    prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input."
+
+    # Run Claude call in thread pool to maintain async compatibility
+    response = await asyncio.to_thread(
+        claude_client.messages.create,
+        model="claude-4-5-opus-20260131",
+        max_tokens=8192,
+        system=peer_prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+    )
+
+    logger.info(f"[Claude] Peer review complete ({len(response.content[0].text)} characters)")
+    return response.content[0].text
 
 
 async def process_exam(
     audio: bytes, class_name: str, mime_type: str = "audio/webm"
 ) -> int:
     """
-    Process the exam audio through two Gemini instances with different temperatures.
+    Process the exam audio through Gemini and Claude for diverse evaluation.
 
     Args:
         audio: The audio bytes from the oral exam recording
@@ -98,38 +195,58 @@ async def process_exam(
 
     Steps:
     1. Read prompts from files
-    2. Send audio to Gemini twice: once with normal temp, once with higher temp
+    2. Send audio to Gemini and Claude for diverse model evaluation
     3. Exchange responses for peer review
     4. Extract grades from both final responses and average them
     """
+    logger.info("=" * 60)
+    logger.info(f"Starting exam processing for class: {class_name}")
+    logger.info("=" * 60)
+
     # Step 1: Read prompts
+    logger.info("Step 1: Loading prompts...")
     first_stage_prompt = read_prompt("first_stage.txt")
     first_stage_prompt = first_stage_prompt.replace("{class_name}", class_name)
     second_stage_prompt = read_prompt("second_stage.txt")
     second_stage_prompt = second_stage_prompt.replace("{class_name}", class_name)
+    logger.info("Prompts loaded successfully")
 
-    # Step 2: Send audio to Gemini with two different temperatures for diversity
-    gemini_response_1 = await call_gemini(
-        audio, first_stage_prompt, mime_type, temperature=1.0
+    # Step 2: Send audio to Gemini and Claude for diverse model evaluation
+    logger.info("-" * 60)
+    logger.info("Step 2: Initial AI analysis (parallel)")
+    logger.info("-" * 60)
+    gemini_response = await call_gemini(
+        audio, first_stage_prompt, mime_type
     )
-    gemini_response_2 = await call_gemini(
-        audio, first_stage_prompt, mime_type, temperature=1.5
+    claude_response = await call_claude(
+        audio, first_stage_prompt, mime_type
     )
 
     # Step 3: Exchange responses - each instance reviews the other's analysis
-    gemini_final_1 = await call_gemini_with_peer_response(
-        gemini_response_2, second_stage_prompt, temperature=1.0
+    logger.info("-" * 60)
+    logger.info("Step 3: Peer review exchange")
+    logger.info("-" * 60)
+    gemini_final = await call_gemini_with_peer_response(
+        claude_response, second_stage_prompt
     )
-    gemini_final_2 = await call_gemini_with_peer_response(
-        gemini_response_1, second_stage_prompt, temperature=1.5
+    claude_final = await call_claude_with_peer_response(
+        gemini_response, second_stage_prompt
     )
 
     # Step 4: Extract grades and compute average
-    grade_1 = await convert_report_to_int(gemini_final_1)
-    grade_2 = await convert_report_to_int(gemini_final_2)
+    logger.info("-" * 60)
+    logger.info("Step 4: Extracting and averaging grades...")
+    logger.info("-" * 60)
+    grade_1 = await convert_report_to_int(gemini_final)
+    logger.info(f"[Gemini] Grade extracted: {grade_1}")
+    grade_2 = await convert_report_to_int(claude_final)
+    logger.info(f"[Claude] Grade extracted: {grade_2}")
 
     average_grade = round((grade_1 + grade_2) / 2)
 
+    logger.info("=" * 60)
+    logger.info(f"FINAL AVERAGE GRADE: {average_grade}")
+    logger.info("=" * 60)
     return average_grade
 
 
@@ -144,6 +261,7 @@ async def convert_report_to_int(report: str) -> int:
         The single integer grade found in the report.
     """
     prompt = f"Extract the final grade/score from this review and return only the integer:\n\n{report}"
+    logger.info("Extracting grade from report using Gemini Flash...")
 
     # Run sync Gemini call in thread pool to maintain async compatibility (puts it in another thread so the main program can continue in the current one)
     response = await asyncio.to_thread(
@@ -157,86 +275,5 @@ async def convert_report_to_int(report: str) -> int:
 
     # Parse the response to get the integer
     grade_text = response.text.strip()
+    logger.info(f"Grade extraction complete: {grade_text}")
     return int(grade_text)
-
-
-@dataclass
-class CheatingDetectionResult:
-    """Result from the cheating detection analysis."""
-    is_cheating: bool
-    confidence: str
-    summary: str
-    indicators_found: list
-    recommendation: str
-    notes: str
-
-
-async def detect_cheating(
-    audio: bytes,
-    video: bytes,
-    audio_mime_type: str = "audio/webm",
-    video_mime_type: str = "video/webm",
-) -> CheatingDetectionResult:
-    """
-    Analyze audio and video from an oral exam to detect potential cheating.
-
-    Args:
-        audio: Audio bytes from the oral exam recording
-        video: Video bytes from the oral exam recording
-        audio_mime_type: MIME type of the audio file
-        video_mime_type: MIME type of the video file
-
-    Returns:
-        CheatingDetectionResult with analysis of potential cheating indicators
-    """
-    # Read the cheating detection prompt
-    system_prompt = read_prompt("cheating_detection.txt")
-
-    # Create inline data parts for audio and video
-    audio_part = genai.types.Part.from_bytes(
-        data=audio,
-        mime_type=audio_mime_type,
-    )
-    video_part = genai.types.Part.from_bytes(
-        data=video,
-        mime_type=video_mime_type,
-    )
-
-    prompt_text = "Please analyze this audio and video recording from an oral exam for any signs of cheating or academic dishonesty. Provide your analysis in the specified JSON format."
-
-    # Call Gemini with both audio and video
-    response = await asyncio.to_thread(
-        gemini_client.models.generate_content,
-        model="gemini-3-pro-preview",
-        contents=[audio_part, video_part, prompt_text],
-        config=genai.types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.5,  # Lower temperature for more consistent analysis
-        ),
-    )
-
-    # Parse the JSON response
-    response_text = response.text.strip()
-
-    # Extract JSON from the response (handle markdown code blocks if present)
-    if "```json" in response_text:
-        json_start = response_text.find("```json") + 7
-        json_end = response_text.find("```", json_start)
-        response_text = response_text[json_start:json_end].strip()
-    elif "```" in response_text:
-        json_start = response_text.find("```") + 3
-        json_end = response_text.find("```", json_start)
-        response_text = response_text[json_start:json_end].strip()
-
-    result_data = json.loads(response_text)
-
-    return CheatingDetectionResult(
-        is_cheating=result_data.get("is_cheating", False),
-        confidence=result_data.get("confidence", "low"),
-        summary=result_data.get("summary", ""),
-        indicators_found=result_data.get("indicators_found", []),
-        recommendation=result_data.get("recommendation", "clear"),
-        notes=result_data.get("notes", ""),
-    )
-
-
