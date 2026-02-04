@@ -7,16 +7,14 @@ router = APIRouter()
 @router.post("/analyze")
 async def analyze(
     audio: UploadFile = File(...),
-    video: UploadFile = File(...),
     class_name: str = Form(...),
 ) -> dict:
     """
-    Accepts audio and video files, processes them through AI clients,
+    Accepts audio file, processes them through AI clients,
     and returns the averaged grade from both models.
 
     Args:
         audio: The audio file from the oral exam (supports .webm, .m4a, .mp4)
-        video: The video file (stored for potential anticheat analysis)
         class_name: The name of the class being taught
 
     Returns:
@@ -26,9 +24,6 @@ async def analyze(
         - class_name: The class that was evaluated
     """
     audio_bytes = await audio.read()
-    video_bytes = (
-        await video.read()
-    )  # Video stored but might be sent eventually to an anticheat model
 
     # Get the content type from the uploaded file, default to audio/webm
     mime_type = audio.content_type or "audio/webm"
