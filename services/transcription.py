@@ -1,10 +1,11 @@
-import time
 import urllib.request
 import urllib.error
 import json
 import logging
 import asyncio
-import base64
+import google.genai as genai
+
+from config.api_keys import GEMINI_API_KEY
 
 # Configure logging
 logging.basicConfig(
@@ -14,7 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from config.api_keys import GEMINI_API_KEY
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 def _speech_config_from_mime_type(mime_type: str) -> dict:
     encoding_map = {
@@ -75,56 +76,26 @@ def _extract_transcript(response: dict) -> str:
     return " ".join(parts).strip()
 
 
-async def transcribe_audio_with_google_speech_api_key(
-    audio: bytes,
-    mime_type: str = "audio/webm",
-    language_code: str = "en-US",
-    timeout_seconds: int = 600,
-) -> str:
+async def transcribe_audio_with_gemini(audio: bytes, mime_type: str = "audio/mp3") -> str:
     """
-    Transcribe audio using Google Speech-to-Text REST API with the Gemini API key.
+    Transcribes audio using Gemini 2.5 Flash.
     """
-    logger.info("[Transcription] Starting audio transcription with Google Speech-to-Text...")
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is required for Google Speech-to-Text.")
+    logger.info("[Transcription] Starting Gemini transcription...")
 
-    audio_base64 = base64.standard_b64encode(audio).decode("utf-8")
-    config = _speech_config_from_mime_type(mime_type)
-    config["languageCode"] = language_code
-
-    payload = {
-        "config": config,
-        "audio": {"content": audio_base64},
-    }
-
-    start_url = (
-        "https://speech.googleapis.com/v1/speech:longrunningrecognize?key="
-        f"{GEMINI_API_KEY}"
+    # Create audio part from bytes
+    audio_part = genai.types.Part.from_bytes(
+        data=audio,
+        mime_type=mime_type,
     )
-    logger.info("[Transcription] Sending audio to Google Speech-to-Text API...")
-    start_response = await asyncio.to_thread(_google_speech_post, start_url, payload)
-    operation_name = start_response.get("name")
-    if not operation_name:
-        raise RuntimeError("Google Speech-to-Text did not return an operation name.")
 
-    poll_url = (
-        "https://speech.googleapis.com/v1/operations/"
-        f"{operation_name}?key={GEMINI_API_KEY}"
+    prompt_text = "Transcribe this audio file exactly as spoken."
+
+    # Run sync Gemini call in thread pool to maintain async compatibility
+    response = await asyncio.to_thread(
+        gemini_client.models.generate_content,
+        model="gemini-2.5-flash",
+        contents=[audio_part, prompt_text],
     )
-    deadline = time.time() + timeout_seconds
-    logger.info("[Transcription] Waiting for transcription to complete...")
 
-    while time.time() < deadline:
-        operation = await asyncio.to_thread(_google_speech_get, poll_url)
-        if operation.get("done"):
-            if "error" in operation:
-                message = operation["error"].get("message", "Unknown error")
-                logger.error(f"[Transcription] FAILED: {message}")
-                raise RuntimeError(f"Google Speech-to-Text failed: {message}")
-            response = operation.get("response", {})
-            transcript = _extract_transcript(response)
-            logger.info(f"[Transcription] Complete ({len(transcript)} characters)")
-            return transcript
-        time.sleep(2)
-
-    raise TimeoutError("Google Speech-to-Text timed out waiting for transcription.")
+    logger.info(f"[Transcription] Complete ({len(response.text)} characters)")
+    return response.text
