@@ -26,6 +26,7 @@ TODO
 <h1>Full Return Types</h1>
 
 <h3>`/analyze Endpoint`</h3>
+
 ```
 {
     "success": True (bool),
@@ -33,7 +34,9 @@ TODO
     "class_name": class_name (str),
 }
 ```
+
 <h3>`/detect-cheating`</h3>
+
 ```
 {
     "success": True (bool),
