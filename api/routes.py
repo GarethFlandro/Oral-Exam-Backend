@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Form
-from services.exam_service import process_exam, detect_cheating
+from services.exam_service import process_exam
+from services.anticheat import detect_cheating
 
 router = APIRouter()
 

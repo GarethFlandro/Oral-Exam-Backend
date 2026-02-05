@@ -4,7 +4,7 @@ import google.genai as genai
 import logging
 import asyncio
 
-from exam_service import read_prompt, gemini_client
+from services.exam_service import read_prompt, gemini_client
 
 # Configure logging
 logging.basicConfig(

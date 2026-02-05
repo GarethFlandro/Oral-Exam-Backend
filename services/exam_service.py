@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import logging
 from pathlib import Path
 
@@ -7,6 +6,7 @@ import anthropic
 import google.genai as genai
 
 from config.api_keys import CLAUDE_API_KEY, GEMINI_API_KEY
+from services.transcription import transcribe_audio_with_gemini
 
 # Configure logging
 logging.basicConfig(
@@ -72,24 +72,37 @@ async def call_gemini(
 
 
 async def call_gemini_with_peer_response(
-    peer_response: str, peer_prompt: str, temperature: float = 1.0
+    audio: bytes,
+    peer_response: str,
+    peer_prompt: str,
+    mime_type: str = "audio/webm",
+    temperature: float = 1.0
 ) -> str:
     """
     Call Gemini API to review and respond to the peer model's response.
 
     Args:
+        audio: Audio bytes from the original recording
         peer_response: The other model's analysis
         peer_prompt: System instruction for the review
+        mime_type: MIME type of the audio file
         temperature: Sampling temperature (higher = more creative)
     """
     logger.info("[Gemini] Starting peer review of Claude's response...")
-    prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input."
+
+    # Create inline data part for audio
+    audio_part = genai.types.Part.from_bytes(
+        data=audio,
+        mime_type=mime_type,
+    )
+
+    prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input and the audio recording."
 
     # Run sync Gemini call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
         gemini_client.models.generate_content,
         model="gemini-3-pro-preview",
-        contents=prompt,
+        contents=[audio_part, prompt],
         config=genai.types.GenerateContentConfig(
             system_instruction=peer_prompt,
             temperature=temperature,
@@ -101,48 +114,31 @@ async def call_gemini_with_peer_response(
 
 
 async def call_claude(
-    audio: bytes,
+    transcript: str,
     system_prompt: str,
-    mime_type: str = "audio/webm",
 ) -> str:
     """
-    Call Claude API with audio content.
+    Call Claude API with transcribed audio content.
 
     Args:
-        audio: Audio bytes to analyze
+        transcript: Transcribed text from the audio recording
         system_prompt: System instruction for the model
-        mime_type: MIME type of the audio file
     """
-    logger.info("[Claude] Starting audio analysis...")
-    # Encode audio as base64 for Claude
-    audio_base64 = base64.standard_b64encode(audio).decode("utf-8")
+    logger.info("[Claude] Starting analysis...")
 
-    prompt_text = "Please analyze this audio recording from an oral exam."
+    prompt_text = f"Please analyze this transcript from an oral exam recording:\n\n{transcript}"
 
     # Run Claude call in thread pool to maintain async compatibility
-    logger.info("[Claude] Sending request to claude-4-5-opus...")
+    logger.info("[Claude] Sending request to claude-opus-4-6...")
     response = await asyncio.to_thread(
         claude_client.messages.create,
-        model="claude-4-5-opus-20260131",
+        model="claude-opus-4-6",
         max_tokens=8192,
         system=system_prompt,
         messages=[
             {
                 "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt_text,
-                    },
-                    {
-                        "type": "file",
-                        "source": {
-                            "type": "base64",
-                            "media_type": mime_type,
-                            "data": audio_base64,
-                        },
-                    },
-                ],
+                "content": prompt_text,
             }
         ],
     )
@@ -152,22 +148,25 @@ async def call_claude(
 
 
 async def call_claude_with_peer_response(
-    peer_response: str, peer_prompt: str
+    transcript: str,
+    peer_response: str,
+    peer_prompt: str
 ) -> str:
     """
     Call Claude API to review and respond to the peer model's response.
 
     Args:
+        transcript: Transcribed text from the audio recording
         peer_response: The other model's analysis
         peer_prompt: System instruction for the review
     """
     logger.info("[Claude] Starting peer review of Gemini's response...")
-    prompt = f"Here is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering this input."
+    prompt = f"Here is the transcript from the oral exam:\n\n{transcript}\n\nHere is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering both the transcript and this input."
 
     # Run Claude call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
         claude_client.messages.create,
-        model="claude-4-5-opus-20260131",
+        model="claude-opus-4-6",
         max_tokens=8192,
         system=peer_prompt,
         messages=[
@@ -203,15 +202,23 @@ async def process_exam(
     logger.info(f"Starting exam processing for class: {class_name}")
     logger.info("=" * 60)
 
-    # Step 1: Read prompts
-    logger.info("Step 1: Loading prompts...")
+    # Step 1: Read prompts and transcribe audio
+    logger.info("Step 1: Loading prompts and transcribing audio...")
     first_stage_prompt = read_prompt("first_stage.txt")
     first_stage_prompt = first_stage_prompt.replace("{class_name}", class_name)
     second_stage_prompt = read_prompt("second_stage.txt")
     second_stage_prompt = second_stage_prompt.replace("{class_name}", class_name)
-    logger.info("Prompts loaded successfully")
 
-    # Step 2: Send audio to Gemini and Claude for diverse model evaluation
+    # Transcribe audio once for Claude to use
+    logger.info("[Transcription] Starting audio transcription...")
+    transcript = await transcribe_audio_with_gemini(
+        audio=audio,
+        mime_type=mime_type,
+    )
+    logger.info(f"[Transcription] Complete ({len(transcript)} characters)")
+    logger.info("Prompts loaded and audio transcribed successfully")
+
+    # Step 2: Send audio to Gemini and transcript to Claude for diverse model evaluation
     logger.info("-" * 60)
     logger.info("Step 2: Initial AI analysis (parallel)")
     logger.info("-" * 60)
@@ -219,7 +226,7 @@ async def process_exam(
         audio, first_stage_prompt, mime_type
     )
     claude_response = await call_claude(
-        audio, first_stage_prompt, mime_type
+        transcript, first_stage_prompt
     )
 
     # Step 3: Exchange responses - each instance reviews the other's analysis
@@ -227,10 +234,10 @@ async def process_exam(
     logger.info("Step 3: Peer review exchange")
     logger.info("-" * 60)
     gemini_final = await call_gemini_with_peer_response(
-        claude_response, second_stage_prompt
+        audio, claude_response, second_stage_prompt, mime_type
     )
     claude_final = await call_claude_with_peer_response(
-        gemini_response, second_stage_prompt
+        transcript, gemini_response, second_stage_prompt
     )
 
     # Step 4: Extract grades and compute average
@@ -266,7 +273,7 @@ async def convert_report_to_int(report: str) -> int:
     # Run sync Gemini call in thread pool to maintain async compatibility (puts it in another thread so the main program can continue in the current one)
     response = await asyncio.to_thread(
         gemini_client.models.generate_content,
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=genai.types.GenerateContentConfig(
             system_instruction=read_prompt("find_final_score.txt"),
