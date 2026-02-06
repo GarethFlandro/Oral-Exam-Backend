@@ -26,7 +26,7 @@ Gemini API key: `GEMINI_API_KEY` <br>
 
 <h1>Full Return Types</h1>
 
-`/analyze Endpoint`
+`/analyze`
 
 ```
 {

@@ -31,6 +31,13 @@ def read_prompt(filename: str) -> str:
         return f.read()
 
 
+def write_file(filename: str, content: str):
+    """Write content to a file in the prompts directory."""
+    file_path = Path(__file__).parent.parent / "responses" / filename
+    with open(file_path, "r+", encoding="utf-8") as f:
+        f.write(content)
+
+
 async def call_gemini(
     audio: bytes,
     system_prompt: str,
@@ -46,7 +53,6 @@ async def call_gemini(
         mime_type: MIME type of the audio file
         temperature: Sampling temperature (higher = more creative)
     """
-    logger.info("[Gemini] Starting audio analysis...")
     # Create inline data part for audio
     audio_part = genai.types.Part.from_bytes(
         data=audio,
@@ -56,10 +62,10 @@ async def call_gemini(
     prompt_text = "Please analyze this audio recording from an oral exam."
 
     # Run sync Gemini call in thread pool to maintain async compatibility
-    logger.info("[Gemini] Sending request to gemini-3-pro-preview...")
+    logger.info("gemini 1 has commenced")
     response = await asyncio.to_thread(
         gemini_client.models.generate_content,
-        model="gemini-3-pro-preview",
+        model="gemini-3-flash-preview",
         contents=[audio_part, prompt_text],
         config=genai.types.GenerateContentConfig(
             system_instruction=system_prompt,
@@ -67,7 +73,8 @@ async def call_gemini(
         ),
     )
 
-    logger.info(f"[Gemini] Analysis complete ({len(response.text)} characters)")
+    logger.info(f"gemini 1 has ceased")
+    write_file("gemini1.txt", response.text)
     return response.text
 
 
@@ -88,7 +95,7 @@ async def call_gemini_with_peer_response(
         mime_type: MIME type of the audio file
         temperature: Sampling temperature (higher = more creative)
     """
-    logger.info("[Gemini] Starting peer review of Claude's response...")
+    logger.info("gemini 2 has commenced")
 
     # Create inline data part for audio
     audio_part = genai.types.Part.from_bytes(
@@ -101,7 +108,7 @@ async def call_gemini_with_peer_response(
     # Run sync Gemini call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
         gemini_client.models.generate_content,
-        model="gemini-3-pro-preview",
+        model="gemini-3-flash-preview",
         contents=[audio_part, prompt],
         config=genai.types.GenerateContentConfig(
             system_instruction=peer_prompt,
@@ -109,7 +116,8 @@ async def call_gemini_with_peer_response(
         ),
     )
 
-    logger.info(f"[Gemini] Peer review complete ({len(response.text)} characters)")
+    logger.info(f"gemini 2 has ceased")
+    write_file("gemini2.txt", response.text)
     return response.text
 
 
@@ -124,15 +132,13 @@ async def call_claude(
         transcript: Transcribed text from the audio recording
         system_prompt: System instruction for the model
     """
-    logger.info("[Claude] Starting analysis...")
-
     prompt_text = f"Please analyze this transcript from an oral exam recording:\n\n{transcript}"
 
     # Run Claude call in thread pool to maintain async compatibility
-    logger.info("[Claude] Sending request to claude-opus-4-6...")
+    logger.info("claude 1 has commenced")
     response = await asyncio.to_thread(
         claude_client.messages.create,
-        model="claude-opus-4-6",
+        model="claude-sonnet-4-5",
         max_tokens=8192,
         system=system_prompt,
         messages=[
@@ -143,7 +149,8 @@ async def call_claude(
         ],
     )
 
-    logger.info(f"[Claude] Analysis complete ({len(response.content[0].text)} characters)")
+    logger.info(f"claude 1 has ceased")
+    write_file("claude1.txt", response.content[0].text)
     return response.content[0].text
 
 
@@ -160,13 +167,13 @@ async def call_claude_with_peer_response(
         peer_response: The other model's analysis
         peer_prompt: System instruction for the review
     """
-    logger.info("[Claude] Starting peer review of Gemini's response...")
+    logger.info("claude 2 has commenced")
     prompt = f"Here is the transcript from the oral exam:\n\n{transcript}\n\nHere is the other AI's analysis of the oral exam:\n\n{peer_response}\n\nPlease provide your final assessment considering both the transcript and this input."
 
     # Run Claude call in thread pool to maintain async compatibility
     response = await asyncio.to_thread(
         claude_client.messages.create,
-        model="claude-opus-4-6",
+        model="claude-sonnet-4-5",
         max_tokens=8192,
         system=peer_prompt,
         messages=[
@@ -177,7 +184,8 @@ async def call_claude_with_peer_response(
         ],
     )
 
-    logger.info(f"[Claude] Peer review complete ({len(response.content[0].text)} characters)")
+    logger.info(f"claude 2 has ceased")
+    write_file("claude2.txt", response.content[0].text)
     return response.content[0].text
 
 
@@ -198,30 +206,22 @@ async def process_exam(
     3. Exchange responses for peer review
     4. Extract grades from both final responses and average them
     """
-    logger.info("=" * 60)
-    logger.info(f"Starting exam processing for class: {class_name}")
-    logger.info("=" * 60)
 
     # Step 1: Read prompts and transcribe audio
-    logger.info("Step 1: Loading prompts and transcribing audio...")
     first_stage_prompt = read_prompt("first_stage.txt")
     first_stage_prompt = first_stage_prompt.replace("{class_name}", class_name)
     second_stage_prompt = read_prompt("second_stage.txt")
     second_stage_prompt = second_stage_prompt.replace("{class_name}", class_name)
 
     # Transcribe audio once for Claude to use
-    logger.info("[Transcription] Starting audio transcription...")
+    logger.info("transcription has commenced")
     transcript = await transcribe_audio_with_gemini(
         audio=audio,
         mime_type=mime_type,
     )
-    logger.info(f"[Transcription] Complete ({len(transcript)} characters)")
-    logger.info("Prompts loaded and audio transcribed successfully")
+    logger.info(f"transcription has ceased")
 
     # Step 2: Send audio to Gemini and transcript to Claude for diverse model evaluation
-    logger.info("-" * 60)
-    logger.info("Step 2: Initial AI analysis (parallel)")
-    logger.info("-" * 60)
     gemini_response = await call_gemini(
         audio, first_stage_prompt, mime_type
     )
@@ -230,9 +230,6 @@ async def process_exam(
     )
 
     # Step 3: Exchange responses - each instance reviews the other's analysis
-    logger.info("-" * 60)
-    logger.info("Step 3: Peer review exchange")
-    logger.info("-" * 60)
     gemini_final = await call_gemini_with_peer_response(
         audio, claude_response, second_stage_prompt, mime_type
     )
@@ -241,19 +238,14 @@ async def process_exam(
     )
 
     # Step 4: Extract grades and compute average
-    logger.info("-" * 60)
-    logger.info("Step 4: Extracting and averaging grades...")
-    logger.info("-" * 60)
     grade_1 = await convert_report_to_int(gemini_final)
-    logger.info(f"[Gemini] Grade extracted: {grade_1}")
+    logger.info(f"gemini grade obtained: {grade_1}")
     grade_2 = await convert_report_to_int(claude_final)
-    logger.info(f"[Claude] Grade extracted: {grade_2}")
+    logger.info(f"claude grade obtained: {grade_2}")
 
     average_grade = round((grade_1 + grade_2) / 2)
 
-    logger.info("=" * 60)
-    logger.info(f"FINAL AVERAGE GRADE: {average_grade}")
-    logger.info("=" * 60)
+    logger.info(f"average grade is: {average_grade}")
     return average_grade
 
 
@@ -268,7 +260,6 @@ async def convert_report_to_int(report: str) -> int:
         The single integer grade found in the report.
     """
     prompt = f"Extract the final grade/score from this review and return only the integer:\n\n{report}"
-    logger.info("Extracting grade from report using Gemini Flash...")
 
     # Run sync Gemini call in thread pool to maintain async compatibility (puts it in another thread so the main program can continue in the current one)
     response = await asyncio.to_thread(
@@ -282,5 +273,4 @@ async def convert_report_to_int(report: str) -> int:
 
     # Parse the response to get the integer
     grade_text = response.text.strip()
-    logger.info(f"Grade extraction complete: {grade_text}")
     return int(grade_text)
