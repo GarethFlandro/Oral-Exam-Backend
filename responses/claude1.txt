@@ -1,0 +1,29 @@
+**Student Score:** 12/100
+
+**Summary of Performance:**
+This transcript appears to be from an instructional video created *by* a teacher/tutor, not a student responding to exam questions. The speaker demonstrates solid knowledge of basic differentiation rules appropriate for AP Calculus BC. However, since this is clearly a teaching presentation rather than a student's oral exam response, it fundamentally fails to meet the assessment criteria of answering examination questions.
+
+**Strengths:**
+* The derivatives presented are factually accurate across all categories (power rule, trigonometric functions, exponentials, logarithms, and inverse trigonometric functions).
+* The explanations are structured pedagogically with clear step-by-step demonstrations (e.g., explaining the power rule application to 1/x and √x).
+* Coverage is comprehensive for standard AP Calculus BC derivative formulas.
+
+**Areas for Improvement:**
+* **Critical Issue:** This is not a student's exam response—it is an instructional video script. The format (teaching others, offering practice pauses, referencing "you calculus students") disqualifies it as an oral examination response.
+* **Missing Examination Context:** There is no evidence the speaker is *answering questions posed by an examiner*. Instead, the speaker controls the entire flow, asks themselves questions, and provides answers.
+* **No Demonstration of Personal Understanding Under Examination Conditions:** In a legitimate oral exam, we would expect a student to respond to an examiner's prompts, potentially handle follow-up questions, and demonstrate understanding through interactive dialogue.
+
+**Justification for Deductions:**
+
+**Factual Accuracy: 12/40 Points** (30% awarded for technically correct content)
+* While all derivatives stated are correct, this category assumes the context of a student *being examined*. Since this is instructional content, the accuracy is not demonstrated under examination conditions but rather presented as pre-prepared material.
+
+**Depth of Understanding & Application: 0/40 Points**
+* No points awarded because there is no evidence of a student responding to examination questions. The format precludes assessment of whether the speaker can apply knowledge under questioning, handle unexpected follow-ups, or demonstrate understanding beyond rote recitation of prepared material.
+
+**Clarity & Coherence: 0/20 Points**
+* While the presentation is clear as *instruction*, it fails as an *exam response*. There is no examiner's question being addressed, no direct answering of prompts appropriate to an oral examination format.
+
+---
+
+**Procedural Note:** If this transcript was submitted in error (e.g., wrong file uploaded), please provide the actual student oral exam recording for proper evaluation. If this *is* the intended submission, I cannot grade it as an oral examination response, as it does not represent a student answering an examiner's questions about AP Calculus BC content.

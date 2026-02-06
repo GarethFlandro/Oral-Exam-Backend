@@ -1,19 +1,10 @@
 import urllib.request
 import urllib.error
 import json
-import logging
 import asyncio
 import google.genai as genai
 
 from config.api_keys import GEMINI_API_KEY
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    datefmt="%H:%M:%S",
-)
-logger = logging.getLogger(__name__)
 
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -80,8 +71,6 @@ async def transcribe_audio_with_gemini(audio: bytes, mime_type: str = "audio/mp3
     """
     Transcribes audio using Gemini 2.5 Flash.
     """
-    logger.info("[Transcription] Starting Gemini transcription...")
-
     # Create audio part from bytes
     audio_part = genai.types.Part.from_bytes(
         data=audio,
@@ -97,5 +86,4 @@ async def transcribe_audio_with_gemini(audio: bytes, mime_type: str = "audio/mp3
         contents=[audio_part, prompt_text],
     )
 
-    logger.info(f"[Transcription] Complete ({len(response.text)} characters)")
     return response.text
