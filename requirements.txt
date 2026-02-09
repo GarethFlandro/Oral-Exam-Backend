@@ -4,3 +4,4 @@ python-multipart>=0.0.22
 anthropic>=0.78.0
 google.genai>=1.62.0
 protobuf>=6.33.5
+elevenlabs>=2.35.0

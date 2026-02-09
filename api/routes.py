@@ -1,6 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
 from services.exam_service import process_exam
 from services.anticheat import detect_cheating
+from services.voice_transcripts import generate_speech
+import json
+import zipfile
+import io
 
 router = APIRouter()
 
@@ -32,7 +37,6 @@ async def analyze(
     average_grade = await process_exam(audio_bytes, class_name, mime_type)
 
     return {
-        "success": True,
         "grade": average_grade,
         "class_name": class_name,
     }
@@ -84,3 +88,43 @@ async def detect_cheating_endpoint(
         "notes": result.notes,
     }
 
+
+@router.post("/generate-speech")
+async def generate_speech_endpoint(
+    questions: str = Form(...),
+) -> StreamingResponse:
+    """
+    Generate speech audio files from a list of question strings.
+
+    Args:
+        questions: A JSON string in format JSON.stringify({ items: myArray })
+                  (e.g., '{"items":["apple","banana"]}')
+
+    Returns:
+        A ZIP file containing MP3 audio files for each question.
+        Each audio file is named question_0.mp3, question_1.mp3, etc.
+    """
+    # Parse the JSON string to get the items array
+    questions_data = json.loads(questions)
+    question_list = questions_data["items"]
+
+    # Create an in-memory ZIP file
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for index, question_text in enumerate(question_list):
+            # Generate audio for each question using ElevenLabs
+            audio_bytes = generate_speech(question_text)
+
+            # Add the audio file to the ZIP archive
+            filename = f"question_{index}.mp3"
+            zip_file.writestr(filename, audio_bytes)
+
+    # Seek to the beginning of the buffer for reading
+    zip_buffer.seek(0)
+
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=questions_audio.zip"}
+    )
