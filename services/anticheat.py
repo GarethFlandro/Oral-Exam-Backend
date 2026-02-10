@@ -26,63 +26,67 @@ class CheatingDetectionResult:
 
 
 async def detect_cheating(
-    audio: bytes,
-    video: bytes,
-    audio_mime_type: str = "audio/webm",
-    video_mime_type: str = "video/webm",
+    exam_audio: bytes,
+    student_video: bytes,
+    student_screen: bytes,
+    exam_audio_mime_type: str = "audio/webm",
+    student_video_mime_type: str = "video/webm",
+    student_screen_mime_type: str = "video/webm",
 ) -> CheatingDetectionResult:
     """
     Analyze audio and video from an oral exam to detect potential cheating.
 
     Args:
-        audio: Audio bytes from the oral exam recording
-        video: Video bytes from the oral exam recording
-        audio_mime_type: MIME type of the audio file
-        video_mime_type: MIME type of the video file
+        exam_audio: Audio bytes from the oral exam recording
+        student_video: Video bytes of the student during the exam
+        student_screen: Video bytes of the student's screen recording during the exam
+        exam_audio_mime_type: MIME type of the audio file
+        student_video_mime_type: MIME type of the student video file
+        student_screen_mime_type: MIME type of the screen recording file
 
     Returns:
         CheatingDetectionResult with analysis of potential cheating indicators
     """
-    logger.info("=" * 60)
-    logger.info("[Cheating Detection] Starting analysis...")
-    logger.info("=" * 60)
 
     # Read the cheating detection prompt
-    logger.info("[Cheating Detection] Loading prompt...")
     system_prompt = read_prompt("cheating_detection.txt")
 
-    # Create inline data parts for audio and video
-    logger.info("[Cheating Detection] Preparing audio data...")
+    # Create inline data parts for audio, video, and screen recording
+    logger.info("got audio data")
     audio_part = genai.types.Part.from_bytes(
-        data=audio,
-        mime_type=audio_mime_type,
+        data=exam_audio,
+        mime_type=exam_audio_mime_type,
     )
-    logger.info("[Cheating Detection] Preparing video data...")
+    logger.info("got video data")
     video_part = genai.types.Part.from_bytes(
-        data=video,
-        mime_type=video_mime_type,
+        data=student_video,
+        mime_type=student_video_mime_type,
+    )
+    logger.info("got screen recording data")
+    screen_part = genai.types.Part.from_bytes(
+        data=student_screen,
+        mime_type=student_screen_mime_type,
     )
 
-    prompt_text = "Please analyze this audio and video recording from an oral exam for any signs of cheating or academic dishonesty. Provide your analysis in the specified JSON format."
+    prompt_text = "Please analyze this audio, video recording, and screen recording from an oral exam for any signs of cheating or academic dishonesty. Provide your analysis in the specified JSON format."
 
-    # Call Gemini with both audio and video
-    logger.info("[Gemini] Sending audio/video for cheating analysis...")
+    # Call Gemini with audio, video, and screen recording
+    logger.info("sending data to gemini")
     response = await asyncio.to_thread(
         gemini_client.models.generate_content,
         model="gemini-3-pro-preview",
-        contents=[audio_part, video_part, prompt_text],
+        contents=[audio_part, video_part, screen_part, prompt_text],
         config=genai.types.GenerateContentConfig(
             system_instruction=system_prompt,
-            temperature=0.5,  # Lower temperature for more consistent analysis
+            temperature=0.5,  # lower temperature for more consistent analysis
         ),
     )
-    logger.info("[Gemini] Cheating analysis response received")
 
     # Parse the JSON response
-    logger.info("[Cheating Detection] Parsing analysis results...")
+    logger.info("parsing json")
     response_text = response.text.strip()
 
-    # Extract JSON from the response (handle markdown code blocks if present)
+    # Extract JSON from the response (handle markdown code blocks if present because ai)
     if "```json" in response_text:
         json_start = response_text.find("```json") + 7
         json_end = response_text.find("```", json_start)
@@ -103,11 +107,9 @@ async def detect_cheating(
         notes=result_data.get("notes", ""),
     )
 
-    logger.info("=" * 60)
-    cheating_status = "DETECTED" if result.is_cheating else "CLEAR"
-    logger.info(f"[Cheating Detection] RESULT: {cheating_status}")
-    logger.info(f"   Confidence: {result.confidence}")
-    logger.info(f"   Recommendation: {result.recommendation}")
-    logger.info("=" * 60)
+    cheating_status = "yes" if result.is_cheating else "no"
+    logger.info(f"Was cheating: {cheating_status}")
+    logger.info(f"Confidence: {result.confidence}")
+    logger.info(f"Recommendation: {result.recommendation}")
 
     return result
