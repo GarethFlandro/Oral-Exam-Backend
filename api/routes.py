@@ -10,8 +10,8 @@ import io
 router = APIRouter()
 
 
-@router.post("/analyze")
-async def analyze(
+@router.post("/analyze-exam")
+async def analyze_exam(
     audio: UploadFile = File(...),
     class_name: str = Form(...),
 ) -> dict:
@@ -97,8 +97,14 @@ async def generate_speech_endpoint(
     Generate speech audio files from a list of question strings.
 
     Args:
-        questions: A JSON string in format JSON.stringify({ items: myArray })
-                  (e.g., '{"items":["apple","banana"]}')
+        questions: A JSON string in format:
+            {
+                "items": [
+                    "What is the capital of France?",
+                    "Explain the theory of relativity.",
+                    ...
+                ]
+            }
 
     Returns:
         A ZIP file containing MP3 audio files for each question.
