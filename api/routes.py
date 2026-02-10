@@ -44,15 +44,17 @@ async def analyze_exam(
 
 @router.post("/detect-cheating")
 async def detect_cheating_endpoint(
-    audio: UploadFile = File(...),
-    video: UploadFile = File(...),
+    exam_audio: UploadFile = File(...),
+    student_video: UploadFile = File(...),
+    student_screen: UploadFile = File(...),
 ) -> dict:
     """
     Analyzes audio and video from an oral exam to detect potential cheating.
 
     Args:
-        audio: The audio file from the oral exam (supports .webm, .m4a, .mp4)
-        video: The video file from the oral exam (supports .webm, .mp4)
+        exam_audio: The audio file from the oral exam
+        student_video: The video of the student during the oral exam
+        student_screen: The screen recording of the student's computer during the exam
 
     Returns:
         JSON response with:
@@ -64,18 +66,22 @@ async def detect_cheating_endpoint(
         - recommendation: clear/review/flag
         - notes: Additional context
     """
-    audio_bytes = await audio.read()
-    video_bytes = await video.read()
+    exam_audio_bytes = await exam_audio.read()
+    student_video_bytes = await student_video.read()
+    student_screen_bytes = await student_screen.read()
 
     # Get MIME types from uploaded files
-    audio_mime_type = audio.content_type or "audio/webm"
-    video_mime_type = video.content_type or "video/webm"
+    exam_audio_mime_type = exam_audio.content_type or "audio/webm"
+    student_video_mime_type = student_video.content_type or "video/webm"
+    student_screen_mime_type = student_screen.content_type or "video/webm"
 
     result = await detect_cheating(
-        audio=audio_bytes,
-        video=video_bytes,
-        audio_mime_type=audio_mime_type,
-        video_mime_type=video_mime_type,
+        exam_audio=exam_audio_bytes,
+        student_video=student_video_bytes,
+        student_screen=student_screen_bytes,
+        exam_audio_mime_type=exam_audio_mime_type,
+        student_video_mime_type=student_video_mime_type,
+        student_screen_mime_type=student_screen_mime_type,
     )
 
     return {
