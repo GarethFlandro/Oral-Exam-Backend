@@ -1,7 +1,4 @@
 # Oral-Exam-Backend
-TODO
-- Anticheat model
-- Replace 1.5 temp gemini with another model
 
 <h1>How to set up</h1>
 
