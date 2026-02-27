@@ -39,10 +39,10 @@ def write_file(filename: str, content: str):
 
 
 async def call_gemini(
-    audio: bytes,
-    system_prompt: str,
-    mime_type: str = "audio/webm",
-    temperature: float = 1.0,
+        audio: bytes,
+        system_prompt: str,
+        mime_type: str = "audio/webm",
+        temperature: float = 1.0,
 ) -> str:
     """
     Call Gemini API with audio content.
@@ -79,11 +79,11 @@ async def call_gemini(
 
 
 async def call_gemini_with_peer_response(
-    audio: bytes,
-    peer_response: str,
-    peer_prompt: str,
-    mime_type: str = "audio/webm",
-    temperature: float = 1.0
+        audio: bytes,
+        peer_response: str,
+        peer_prompt: str,
+        mime_type: str = "audio/webm",
+        temperature: float = 1.0
 ) -> str:
     """
     Call Gemini API to review and respond to the peer model's response.
@@ -122,8 +122,8 @@ async def call_gemini_with_peer_response(
 
 
 async def call_claude(
-    transcript: str,
-    system_prompt: str,
+        transcript: str,
+        system_prompt: str,
 ) -> str:
     """
     Call Claude API with transcribed audio content.
@@ -155,9 +155,9 @@ async def call_claude(
 
 
 async def call_claude_with_peer_response(
-    transcript: str,
-    peer_response: str,
-    peer_prompt: str
+        transcript: str,
+        peer_response: str,
+        peer_prompt: str
 ) -> str:
     """
     Call Claude API to review and respond to the peer model's response.
@@ -190,7 +190,7 @@ async def call_claude_with_peer_response(
 
 
 async def process_exam(
-    audio: bytes, class_name: str, mime_type: str = "audio/webm"
+        audio: bytes, class_name: str, mime_type: str = "audio/webm"
 ) -> int:
     """
     Process the exam audio through Gemini and Claude for diverse evaluation.

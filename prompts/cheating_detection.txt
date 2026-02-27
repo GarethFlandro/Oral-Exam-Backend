@@ -24,6 +24,7 @@ You are an Academic Integrity Monitor responsible for analyzing oral examination
 * Screen sharing or remote desktop applications running
 * File explorer open with notes or documents
 * AI assistants (ChatGPT, Claude, etc.) or other automated answer tools visible
+* Sudden disconnections or interruptions in the screen recording that seem deliberate.
 
 **Audio Indicators:**
 * Background voices or whispers suggesting someone is feeding answers

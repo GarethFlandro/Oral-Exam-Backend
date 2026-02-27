@@ -1,18 +1,33 @@
-from fastapi import APIRouter, UploadFile, File, Form
-from fastapi.responses import StreamingResponse
-from services.exam_service import process_exam
-from services.anticheat import detect_cheating
-from services.voice_transcripts import generate_speech
-import json
-import zipfile
 import io
+import json
+import os
 import uuid
-from fastapi import HTTPException, Response, Cookie
+import zipfile
+
+from fastapi import APIRouter, UploadFile, File, Form, Depends, Response, Cookie, HTTPException, status
+from fastapi.responses import StreamingResponse
+from fastapi.security import APIKeyHeader
+
+from services.anticheat import detect_cheating
+from services.exam_service import process_exam
+from services.voice_transcripts import generate_speech
 
 router = APIRouter()
 
+STATIC_API_KEY = os.getenv("ORAL_EXAM_API_KEY")
+api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
 
-@router.post("/analyze-exam")
+
+def get_api_key(api_key: str = Depends(api_key_header)):
+    if api_key == STATIC_API_KEY:
+        return api_key
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Could not validate API key",
+    )
+
+
+@router.post("/analyze-exam", dependencies=[Depends(get_api_key)])
 async def analyze_exam(
         audio: UploadFile = File(...),
         class_name: str = Form(...),
@@ -44,7 +59,7 @@ async def analyze_exam(
     }
 
 
-@router.post("/detect-cheating")
+@router.post("/detect-cheating", dependencies=[Depends(get_api_key)])
 async def detect_cheating_endpoint(
         exam_audio: UploadFile = File(...),
         student_video: UploadFile = File(...),
@@ -97,7 +112,7 @@ async def detect_cheating_endpoint(
     }
 
 
-@router.post("/generate-speech")
+@router.post("/generate-speech", dependencies=[Depends(get_api_key)])
 async def generate_speech_endpoint(
         questions: str = Form(...),
 ) -> StreamingResponse:
@@ -148,20 +163,20 @@ async def generate_speech_endpoint(
 logged_in_users = {}
 
 
-@router.post("/login")
-def login(response: Response, username: str):
+@router.post("/login", dependencies=[Depends(get_api_key)])
+def login(response: Response, email: str):
     # Generate a random session ID
     session_id = str(uuid.uuid4())
 
     # Add to your list
-    logged_in_users[session_id] = username
+    logged_in_users[session_id] = email
 
     # Give the session ID to the user as a cookie
     response.set_cookie(key="session_token", value=session_id)
-    return {"message": f"Successfully logged in as {username}"}
+    return {"message": f"Successfully logged in as {email}"}
 
 
-@router.post("/logout")
+@router.post("/logout", dependencies=[Depends(get_api_key)])
 def logout(response: Response, session_token: str = Cookie(None)):
     # Remove from list
     if session_token in logged_in_users:
@@ -170,12 +185,3 @@ def logout(response: Response, session_token: str = Cookie(None)):
     # Tell the browser to delete the cookie
     response.delete_cookie("session_token")
     return {"message": "Logged out"}
-
-
-@router.get("/verify-me")
-def verify_user(session_token: str = Cookie(None)):
-    # Check if the token from the cookie is in our list
-    if session_token not in logged_in_users:
-        return {"message": 1}
-    else:
-        return {"message": 0}
