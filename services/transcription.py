@@ -1,12 +1,14 @@
-import urllib.request
-import urllib.error
-import json
 import asyncio
+import json
+import urllib.error
+import urllib.request
+
 import google.genai as genai
 
 from config.api_keys import GEMINI_API_KEY
 
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+
 
 def _speech_config_from_mime_type(mime_type: str) -> dict:
     encoding_map = {

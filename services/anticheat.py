@@ -1,8 +1,9 @@
-import json
-from dataclasses import dataclass
-import google.genai as genai
-import logging
 import asyncio
+import json
+import logging
+from dataclasses import dataclass
+
+import google.genai as genai
 
 from services.exam_service import read_prompt, gemini_client
 
@@ -13,6 +14,7 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CheatingDetectionResult:
@@ -26,12 +28,12 @@ class CheatingDetectionResult:
 
 
 async def detect_cheating(
-    exam_audio: bytes,
-    student_video: bytes,
-    student_screen: bytes,
-    exam_audio_mime_type: str = "audio/webm",
-    student_video_mime_type: str = "video/webm",
-    student_screen_mime_type: str = "video/webm",
+        exam_audio: bytes,
+        student_video: bytes,
+        student_screen: bytes,
+        exam_audio_mime_type: str = "audio/webm",
+        student_video_mime_type: str = "video/webm",
+        student_screen_mime_type: str = "video/webm",
 ) -> CheatingDetectionResult:
     """
     Analyze audio and video from an oral exam to detect potential cheating.
