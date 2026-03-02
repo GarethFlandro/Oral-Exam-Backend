@@ -1,9 +1,15 @@
 FROM python:3.11-slim
 
 WORKDIR /app
-COPY api .
 
+# copy requirements file
+COPY requirements.txt .
+
+# install dependencies from requirements file
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Use the PORT env variable provided by Cloud Run
-CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
+# copy the rest
+COPY . . 
+
+# start app
+CMD exec uvicorn api.main:app --host 0.0.0.0 --port ${PORT:-8080}
