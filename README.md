@@ -9,19 +9,8 @@ Claude API key: `CLAUDE_API_KEY` <br>
 Gemini API key: `GEMINI_API_KEY` <br>
 4) Deploy the application <br>
 
-<h1>API Endpoints</h1>
 
-1) POST /analyze <br>
-- Takes `audio` of type `string($binary)` (audio file) <br>
-- Takes `class_name` of type `string`<br>
-- Returns 200 code and `application/json` or 422 code and `application/json` <br><br>
-2) POST /detect-cheating <br>
-- Takes `audio` of type `string($binary)` (audio file) <br>
-- Takes `video` of type `string($binary)` (video file) <br>
-- Planning on taking second video for screen recording and camera recording <br>
-- Returns 200 code and `application/json` or 422 code and `application/json`
-
-<h1>Full Return Types</h1>
+<h1>Endpoint Return Types</h1>
 
 `/analyze`
 
@@ -45,4 +34,22 @@ Gemini API key: `GEMINI_API_KEY` <br>
     "recommendation": result.recommendation (str),
     "notes": result.notes (str),
 }
+```
+
+`/generate-speech`
+
+```
+"string"
+```
+
+`/login`
+
+```
+"string"
+```
+
+`/logout`
+
+```
+"string"
 ```
