@@ -235,6 +235,10 @@ async def process_exam(
         transcript, first_stage_prompt
     )
 
+    gemini1_grade = await convert_report_to_int(gemini_response)
+    claude1_grade = await convert_report_to_int(claude_response)
+
+
     # Step 3: Exchange responses - each instance reviews the other's analysis
     gemini_final = await call_gemini_with_peer_response(
         audio, claude_response, second_stage_prompt, mime_type
@@ -242,6 +246,9 @@ async def process_exam(
     claude_final = await call_claude_with_peer_response(
         transcript, gemini_response, second_stage_prompt
     )
+
+    gemini2_grade = await convert_report_to_int(gemini_final)
+    claude2_grade = await convert_report_to_int(claude_final)
 
     # Step 4: Extract grades and compute average
     grade_1 = await convert_report_to_int(gemini_final)
@@ -252,7 +259,7 @@ async def process_exam(
     average_grade = round((grade_1 + grade_2) / 2)
 
     logger.info(f"average grade is: {average_grade}")
-    return average_grade
+    return average_grade, gemini1_grade, claude1_grade, gemini2_grade, claude2_grade
 
 
 async def convert_report_to_int(report: str) -> int:
