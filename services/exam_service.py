@@ -207,6 +207,12 @@ async def process_exam(
     4. Extract grades from both final responses and average them
     """
 
+    # Step 0: Clear previous responses
+    write_file("gemini1.txt", "")
+    write_file("gemini2.txt", "")
+    write_file("claude1.txt", "")
+    write_file("claude2.txt", "")
+
     # Step 1: Read prompts and transcribe audio
     first_stage_prompt = read_prompt("first_stage.txt")
     first_stage_prompt = first_stage_prompt.replace("{class_name}", class_name)

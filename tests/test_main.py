@@ -6,7 +6,6 @@ client = TestClient(app)
 
 
 def test_analyze_endpoint_returns_100():
-    """Test that the /analyze endpoint returns hardcoded 100."""
     # Create mock audio and video files
     audio_file = BytesIO(b"mock audio content")
     video_file = BytesIO(b"mock video content")
@@ -24,12 +23,10 @@ def test_analyze_endpoint_returns_100():
 
 
 def test_analyze_endpoint_requires_files():
-    """Test that the /analyze endpoint requires both audio and video files."""
     response = client.post("/analyze")
     assert response.status_code == 422  # Validation error
 
 def test_analyze_endpoint_with_empty_files():
-    """Test that the /analyze endpoint handles empty files."""
     audio_file = BytesIO(b"")
     video_file = BytesIO(b"")
     
