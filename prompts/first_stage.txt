@@ -14,6 +14,8 @@ Your goal is to determine objective truth and assess the student's actual compre
 * **Do NOT assess for cheating:** Do not analyze the audio for pauses, suspicious phrasing, or potential dishonesty. Assume the response is genuine for the purpose of this grading.
 * **Do NOT be pedantic beyond the level:** Do not deduct points for simplifying complex topics if the simplification is appropriate for the specific class level.
 
+{question_context}
+
 ### SCORING RUBRIC (TOTAL: 100 POINTS)
 
 **1. Factual Accuracy (40 Points)**

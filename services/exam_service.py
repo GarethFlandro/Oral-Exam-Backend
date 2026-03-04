@@ -190,7 +190,10 @@ async def call_claude_with_peer_response(
 
 
 async def process_exam(
-        audio: bytes, class_name: str, mime_type: str = "audio/webm"
+        audio: bytes,
+        class_name: str,
+        mime_type: str = "audio/webm",
+        question_context: dict[str, str] | None = None,
 ) -> tuple[int, int, int, int, int]:
     """
     Process the exam audio through Gemini and Claude for diverse evaluation.
@@ -199,6 +202,8 @@ async def process_exam(
         audio: The audio bytes from the oral exam recording
         class_name: The name of the class being taught
         mime_type: The MIME type of the audio file
+        question_context: Optional dict mapping each question string to
+            teacher-provided grading notes/context for that question.
 
     Steps:
     1. Read prompts from files
@@ -207,18 +212,33 @@ async def process_exam(
     4. Extract grades from both final responses and average them
     """
 
-    # Step 0: Clear previous responses
+    # Clear previous responses
     write_file("gemini1.txt", "")
     write_file("gemini2.txt", "")
     write_file("claude1.txt", "")
     write_file("claude2.txt", "")
     write_file("transcript.txt", "")
 
-    # Step 1: Read prompts and transcribe audio
+    # Build the question context section for the prompt
+    if question_context:
+        context_lines = ["### TEACHER-PROVIDED QUESTION CONTEXT",
+                         "The teacher has provided the following notes for each question. "
+                         "Use these notes as additional grading guidance when evaluating the "
+                         "student's answer to each respective question.\n"]
+        for question, notes in question_context.items():
+            context_lines.append(f"**Question:** {question}")
+            context_lines.append(f"**Teacher's Notes:** {notes}\n")
+        question_context_section = "\n".join(context_lines)
+    else:
+        question_context_section = ""
+
+    # Read prompts and insert class name and question context
     first_stage_prompt = read_prompt("first_stage.txt")
     first_stage_prompt = first_stage_prompt.replace("{class_name}", class_name)
+    first_stage_prompt = first_stage_prompt.replace("{question_context}", question_context_section)
     second_stage_prompt = read_prompt("second_stage.txt")
     second_stage_prompt = second_stage_prompt.replace("{class_name}", class_name)
+    second_stage_prompt = second_stage_prompt.replace("{question_context}", question_context_section)
 
     # Transcribe audio once for Claude to use
     logger.info("transcription has commenced")
@@ -229,7 +249,7 @@ async def process_exam(
     write_file("transcript.txt", transcript)
     logger.info(f"transcription has ceased")
 
-    # Step 2: Send audio to Gemini and transcript to Claude for diverse model evaluation
+    # Send audio to Gemini and transcript to Claude for diverse model evaluation
     gemini_response = await call_gemini(
         audio, first_stage_prompt, mime_type
     )
@@ -241,7 +261,7 @@ async def process_exam(
     claude1_grade = await convert_report_to_int(claude_response)
 
 
-    # Step 3: Exchange responses - each instance reviews the other's analysis
+    # Exchange responses - each instance reviews the other's analysis
     gemini_final = await call_gemini_with_peer_response(
         audio, claude_response, second_stage_prompt, mime_type
     )
@@ -252,7 +272,7 @@ async def process_exam(
     gemini2_grade = await convert_report_to_int(gemini_final)
     claude2_grade = await convert_report_to_int(claude_final)
 
-    # Step 4: Extract grades and compute average
+    # Extract grades and compute average
     grade_1 = await convert_report_to_int(gemini_final)
     logger.info(f"gemini grade obtained: {grade_1}")
     grade_2 = await convert_report_to_int(claude_final)

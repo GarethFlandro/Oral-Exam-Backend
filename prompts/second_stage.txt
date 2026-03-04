@@ -16,6 +16,8 @@ You will be provided with:
 * **Objectivity:** You are the final arbiter of truth. Do not simply "split the difference" between your initial thought and the peer review. If the peer review is factually wrong or pedantic, ignore it.
 * **Cheating/Audio:** As before, disregard potential cheating or audio quality issues (stuttering/accents). Grade strictly on content mastery.
 
+{question_context}
+
 ### DELIBERATION PROCESS (INTERNAL MONOLOGUE)
 Before generating the final grade, you must logically process the Peer Review:
 1.  **Audit the Peer Claims:** For every deduction or praise points raised by the Peer Examiner, verify it against the {class_name} syllabus standards.

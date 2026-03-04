@@ -31,6 +31,7 @@ def get_api_key(api_key: str = Depends(api_key_header)):
 async def analyze_exam(
         audio: UploadFile = File(...),
         class_name: str = Form(...),
+        question_context: str = Form(default="{}"),
 ) -> dict:
     """
     Accepts audio file, processes them through AI clients,
@@ -39,9 +40,16 @@ async def analyze_exam(
     Args:
         audio: The audio file from the oral exam (supports .webm, .m4a, .mp4)
         class_name: The name of the class being taught
+        question_context: A JSON string mapping each question to teacher-provided
+            grading notes/context for that question. Format:
+            {
+                "What is the capital of France?": "Accept only 'Paris'. Do not accept regions.",
+                "Explain Newton's second law.": "Student should mention F=ma and give a real-world example."
+                ...
+            }
 
     Returns:
-        JSON response with:
+        JSON response with
         - success: Boolean indicating if the analysis completed successfully
         - grade: The averaged grade from both models
         - class_name: The class that was evaluated
@@ -51,7 +59,10 @@ async def analyze_exam(
     # Get the content type from the uploaded file, default to audio/webm
     mime_type = audio.content_type or "audio/webm"
 
-    average_grade, gemini1_grade, claude1_grade, gemini2_grade, claude2_grade = await process_exam(audio_bytes, class_name, mime_type)
+    # Parse the question context JSON string into a dict
+    question_context_dict: dict[str, str] = json.loads(question_context)
+
+    average_grade, gemini1_grade, claude1_grade, gemini2_grade, claude2_grade = await process_exam(audio_bytes, class_name, mime_type, question_context_dict)
 
     return {
         "grade": average_grade,
@@ -125,11 +136,9 @@ async def generate_speech_endpoint(
     Args:
         questions: A JSON string in format:
             {
-                "items": [
-                    "What is the capital of France?",
-                    "Explain the theory of relativity.",
-                    ...
-                ]
+                "What is the capital of France?",
+                "Explain the theory of relativity.",
+                ...
             }
 
     Returns:
@@ -137,8 +146,7 @@ async def generate_speech_endpoint(
         Each audio file is named question_0.mp3, question_1.mp3, etc.
     """
     # Parse the JSON string to get the items array
-    questions_data = json.loads(questions)
-    question_list = questions_data["items"]
+    question_list: list[str] = json.loads(questions)
 
     # Create an in-memory ZIP file
     zip_buffer = io.BytesIO()
