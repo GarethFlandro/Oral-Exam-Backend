@@ -51,11 +51,15 @@ async def analyze_exam(
     # Get the content type from the uploaded file, default to audio/webm
     mime_type = audio.content_type or "audio/webm"
 
-    average_grade = await process_exam(audio_bytes, class_name, mime_type)
+    average_grade, gemini1_grade, claude1_grade, gemini2_grade, claude2_grade = await process_exam(audio_bytes, class_name, mime_type)
 
     return {
         "grade": average_grade,
         "class_name": class_name,
+        "gemini_initial_grade": gemini1_grade,
+        "claude_initial_grade": claude1_grade,
+        "gemini_review_grade": gemini2_grade,
+        "claude_review_grade": claude2_grade,
     }
 
 
@@ -102,7 +106,6 @@ async def detect_cheating_endpoint(
     )
 
     return {
-        "success": True,
         "is_cheating": result.is_cheating,
         "confidence": result.confidence,
         "summary": result.summary,

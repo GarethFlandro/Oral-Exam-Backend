@@ -16,17 +16,19 @@ Gemini API key: `GEMINI_API_KEY` <br>
 
 ```
 {
-    "success": True (bool),
-    "grade": average_grade (int),
-    "class_name": class_name (str),
-}
+        "grade": average_grade,
+        "class_name": class_name,
+        "gemini_initial_grade": gemini1_grade,
+        "claude_initial_grade": claude1_grade,
+        "gemini_review_grade": gemini2_grade,
+        "claude_review_grade": claude2_grade,
+    }
 ```
 
 `/detect-cheating`
 
 ```
 {
-    "success": True (bool),
     "is_cheating": result.is_cheating (bool),
     "confidence": result.confidence (str),
     "summary": result.summary (str),

@@ -191,7 +191,7 @@ async def call_claude_with_peer_response(
 
 async def process_exam(
         audio: bytes, class_name: str, mime_type: str = "audio/webm"
-) -> int:
+) -> tuple[int, int, int, int, int]:
     """
     Process the exam audio through Gemini and Claude for diverse evaluation.
 
@@ -212,6 +212,7 @@ async def process_exam(
     write_file("gemini2.txt", "")
     write_file("claude1.txt", "")
     write_file("claude2.txt", "")
+    write_file("transcript.txt", "")
 
     # Step 1: Read prompts and transcribe audio
     first_stage_prompt = read_prompt("first_stage.txt")
@@ -225,6 +226,7 @@ async def process_exam(
         audio=audio,
         mime_type=mime_type,
     )
+    write_file("transcript.txt", transcript)
     logger.info(f"transcription has ceased")
 
     # Step 2: Send audio to Gemini and transcript to Claude for diverse model evaluation
