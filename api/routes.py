@@ -4,7 +4,7 @@ import os
 import uuid
 import zipfile
 
-from fastapi import APIRouter, UploadFile, File, Form, Depends, Response, Cookie, HTTPException, status
+from fastapi import APIRouter, UploadFile, Depends, Response, HTTPException, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 
@@ -29,9 +29,9 @@ def get_api_key(api_key: str = Depends(api_key_header)):
 
 @router.post("/analyze-exam", dependencies=[Depends(get_api_key)])
 async def analyze_exam(
-        audio: UploadFile = File(...),
-        class_name: str = Form(...),
-        question_context: str = Form(default="{}"),
+        audio: UploadFile,
+        class_name: str,
+        question_context: str,
 ) -> dict:
     """
     Accepts audio file, processes them through AI clients,
@@ -76,9 +76,9 @@ async def analyze_exam(
 
 @router.post("/detect-cheating", dependencies=[Depends(get_api_key)])
 async def detect_cheating_endpoint(
-        exam_audio: UploadFile = File(...),
-        student_video: UploadFile = File(...),
-        student_screen: UploadFile = File(...),
+        exam_audio: UploadFile,
+        student_video: UploadFile,
+        student_screen: UploadFile,
 ) -> dict:
     """
     Analyzes audio and video from an oral exam to detect potential cheating.
@@ -128,7 +128,7 @@ async def detect_cheating_endpoint(
 
 @router.post("/generate-speech", dependencies=[Depends(get_api_key)])
 async def generate_speech_endpoint(
-        questions: str = Form(...),
+        questions: str,
 ) -> StreamingResponse:
     """
     Generate speech audio files from a list of question strings.
@@ -188,7 +188,7 @@ def login(response: Response, email: str):
 
 
 @router.post("/logout", dependencies=[Depends(get_api_key)])
-def logout(response: Response, session_token: str = Cookie(None)):
+def logout(response: Response, session_token: str):
     # Remove from list
     if session_token in logged_in_users:
         del logged_in_users[session_token]
