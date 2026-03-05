@@ -8,6 +8,10 @@ from fastapi import APIRouter, UploadFile, Depends, Response, HTTPException, sta
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
 
+from google.auth.transport import requests
+from google.oauth2 import id_token
+
+from config.api_keys import ORAL_EXAM_API_KEY, OAUTH_CLIENT_ID
 from services.anticheat import detect_cheating
 from services.exam_service import process_exam
 from services.voice_transcripts import generate_speech
@@ -174,8 +178,13 @@ async def generate_speech_endpoint(
 logged_in_users = {}
 
 
-@router.post("/login", dependencies=[Depends(get_api_key)])
-def login(response: Response, email: str):
+@router.post("/login")
+def login(response: Response, email: str, oauth_token: str):
+    id_info = id_token.verify_oauth2_token(oauth_token, requests.Request(), OAUTH_CLIENT_ID)
+
+    if oauth_token != "valid_token":
+        raise HTTPException(status_code=401, detail="Invalid OAuth token")
+
     # Generate a random session ID
     session_id = str(uuid.uuid4())
 
@@ -184,7 +193,7 @@ def login(response: Response, email: str):
 
     # Give the session ID to the user as a cookie
     response.set_cookie(key="session_token", value=session_id)
-    return {"message": f"Successfully logged in as {email}"}
+    return {"api_key": ORAL_EXAM_API_KEY}
 
 
 @router.post("/logout", dependencies=[Depends(get_api_key)])

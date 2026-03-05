@@ -130,17 +130,19 @@ Logs in a user and sets a session cookie.
 
 **Input (query parameter):**
 
-| Field   | Type   | Required | Description              |
-|---------|--------|----------|--------------------------|
-| `email` | string | Yes      | The user's email address |
+| Field          | Type   | Required | Description                               |
+|----------------|--------|----------|-------------------------------------------|
+| `email`        | string | Yes      | The user's email address                  |
+| `oauth_token`  | string | Yes      | Token provided by sign-in attempt by user |
 
 **Response:**
 
 ```json
 {
-    "message": "Successfully logged in as user@example.com"
+    "api_key": "ORAL_EXAM_API_KEY" 
 }
 ```
+`ORAL_EXAM_API_KEY` is the static key for the entire backend. We give the user the key if we can verify that they have logged in with Google.
 
 A `session_token` cookie is also set on the response.
 
