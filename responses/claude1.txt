@@ -1,29 +1,40 @@
-**Student Score:** 12/100
+**Student Score:** 42/100
 
 **Summary of Performance:**
-This transcript appears to be from an instructional video created *by* a teacher/tutor, not a student responding to exam questions. The speaker demonstrates solid knowledge of basic differentiation rules appropriate for AP Calculus BC. However, since this is clearly a teaching presentation rather than a student's oral exam response, it fundamentally fails to meet the assessment criteria of answering examination questions.
+The student demonstrates a basic intuitive grasp that limits involve approaching values, but lacks precision in defining what a limit actually is. The explanation contains significant conceptual errors, particularly regarding discontinuities and "skipping math rules," which reflects fundamental misunderstandings about when and how limits work in AP Calculus AB.
 
 **Strengths:**
-* The derivatives presented are factually accurate across all categories (power rule, trigonometric functions, exponentials, logarithms, and inverse trigonometric functions).
-* The explanations are structured pedagogically with clear step-by-step demonstrations (e.g., explaining the power rule application to 1/x and √x).
-* Coverage is comprehensive for standard AP Calculus BC derivative formulas.
+* Correctly identifies that limits involve the concept of "approaching" a value
+* Shows awareness that limits relate to function behavior at specific points
+* Attempts to connect limits to discontinuities, showing some recognition of a key application
 
 **Areas for Improvement:**
-* **Critical Issue:** This is not a student's exam response—it is an instructional video script. The format (teaching others, offering practice pauses, referencing "you calculus students") disqualifies it as an oral examination response.
-* **Missing Examination Context:** There is no evidence the speaker is *answering questions posed by an examiner*. Instead, the speaker controls the entire flow, asks themselves questions, and provides answers.
-* **No Demonstration of Personal Understanding Under Examination Conditions:** In a legitimate oral exam, we would expect a student to respond to an examiner's prompts, potentially handle follow-up questions, and demonstrate understanding through interactive dialogue.
+* Needs to precisely define limits using correct mathematical language (e.g., "as x approaches c, f(x) approaches L")
+* Must understand that limits do NOT "skip" or "ignore" math rules—they ARE a rigorous mathematical rule
+* Should clarify that a limit describes the behavior of a function as the input approaches a value, which may or may not equal the function's actual value at that point
+* Needs to distinguish between when a limit exists versus when a function value exists
 
 **Justification for Deductions:**
 
-**Factual Accuracy: 12/40 Points** (30% awarded for technically correct content)
-* While all derivatives stated are correct, this category assumes the context of a student *being examined*. Since this is instructional content, the accuracy is not demonstrated under examination conditions but rather presented as pre-prepared material.
+**Factual Accuracy: 18/40**
+- The phrase "a limit is what a value is equal to when there's something approaching a value" is imprecise and somewhat circular (-10 points)
+- The claim that limits "skip math rules" is factually incorrect; limits ARE a mathematical rule/definition (-8 points)
+- The statement "you ignore the function not existing and you just find the value" is misleading; you don't "ignore" anything—limits specifically allow us to analyze behavior near points where functions may be undefined (-10 points)
+- The student does not provide the formal definition or even a clear informal one expected at the AP level (-4 points)
 
-**Depth of Understanding & Application: 0/40 Points**
-* No points awarded because there is no evidence of a student responding to examination questions. The format precludes assessment of whether the speaker can apply knowledge under questioning, handle unexpected follow-ups, or demonstrate understanding beyond rote recitation of prepared material.
+**Depth of Understanding & Application: 14/40**
+- The student shows minimal understanding of WHY limits are useful or HOW they actually work (-15 points)
+- No demonstration of the distinction between lim[x→c] f(x) and f(c) (-8 points)
+- The connection to discontinuities is mentioned but not explained correctly or meaningfully (-3 points)
 
-**Clarity & Coherence: 0/20 Points**
-* While the presentation is clear as *instruction*, it fails as an *exam response*. There is no examiner's question being addressed, no direct answering of prompts appropriate to an oral examination format.
+**Clarity & Coherence: 10/20**
+- The response lacks logical structure and precise language (-6 points)
+- The phrase "skip math rules" introduces confusion rather than clarity (-4 points)
+
+At the AP Calculus AB level, students should be able to articulate that a limit describes the value a function approaches as the input approaches a specific value, and that this may differ from (or not exist at) the actual function value at that point. why inverse trig derivatives involve square roots). For a truly exceptional demonstration, brief conceptual notes on 1-2 examples would have shown mastery beyond procedural fluency. However, for a rapid-fire review format, the depth was still very strong.
+
+**Clarity & Coherence: 17/20** (-3 points)
+The structure was logical and easy to follow. However, the delivery was somewhat mechanical and rushed in places, particularly during the inverse trig section where formulas were stated rapidly without pauses for emphasis on the more complex expressions. Additionally, the "log x" base 10 convention could have been clarified more explicitly given that calculus courses vary on this notation. The format was appropriate for a review video but could have benefited from slightly more deliberate pacing on complex formulas.
 
 ---
 
-**Procedural Note:** If this transcript was submitted in error (e.g., wrong file uploaded), please provide the actual student oral exam recording for proper evaluation. If this *is* the intended submission, I cannot grade it as an oral examination response, as it does not represent a student answering an examiner's questions about AP Calculus BC content.

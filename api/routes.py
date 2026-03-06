@@ -179,19 +179,21 @@ logged_in_users = {}
 
 
 @router.post("/login")
-def login(response: Response, email: str, oauth_token: str):
-    id_info = id_token.verify_oauth2_token(oauth_token, requests.Request(), OAUTH_CLIENT_ID)
+def login(response: Response, oauth_token: str):
+    try:
+        id_info = id_token.verify_oauth2_token(oauth_token, requests.Request(), OAUTH_CLIENT_ID)
+    except Exception:
+         raise HTTPException(status_code=401, detail="Invalid OAuth token")
 
-    if oauth_token != "valid_token":
-        raise HTTPException(status_code=401, detail="Invalid OAuth token")
+    email = id_info.get("email")
 
     # Generate a random session ID
     session_id = str(uuid.uuid4())
 
-    # Add to your list
+    # Add to list
     logged_in_users[session_id] = email
 
-    # Give the session ID to the user as a cookie
+    # Give the session ID to the user as a cookie and return API key to this db
     response.set_cookie(key="session_token", value=session_id)
     return {"api_key": ORAL_EXAM_API_KEY}
 
