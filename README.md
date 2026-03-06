@@ -58,8 +58,8 @@ Accepts an audio file of an oral exam, processes it through Gemini and Claude, a
 | `class_name`           | string | The class that was evaluated               |
 | `gemini_initial_grade` | int    | Gemini's first-stage grade                 |
 | `claude_initial_grade` | int    | Claude's first-stage grade                 |
-| `gemini_review_grade`  | int    | Gemini's grade after peer review of Claude |
-| `claude_review_grade`  | int    | Claude's grade after peer review of Gemini |
+| `gemini_review_grade`  | int    | Gemini's grade after reviewing Claude's    |
+| `claude_review_grade`  | int    | Claude's grade after reviewing Gemini's    |
 
 ---
 
