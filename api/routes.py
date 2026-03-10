@@ -1,6 +1,5 @@
 import io
 import json
-import os
 import uuid
 import zipfile
 
@@ -11,14 +10,13 @@ from fastapi.security import APIKeyHeader
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from config.api_keys import ORAL_EXAM_API_KEY, OAUTH_CLIENT_ID
+from config.api_keys import ORAL_EXAM_API_KEY, OAUTH_CLIENT_ID, STATIC_API_KEY
 from services.anticheat import detect_cheating
 from services.exam_service import process_exam
 from services.voice_transcripts import generate_speech
 
 router = APIRouter()
 
-STATIC_API_KEY = os.getenv("ORAL_EXAM_API_KEY")
 api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
 
 
@@ -207,3 +205,10 @@ def logout(response: Response, session_token: str):
     # Tell the browser to delete the cookie
     response.delete_cookie("session_token")
     return {"message": "Logged out"}
+
+@router.post("/is-logged-in", dependencies=[Depends(get_api_key)])
+def is_logged_in(response: Response, session_token: str):
+    if session_token in logged_in_users:
+        return {"logged_in": True, "email": logged_in_users[session_token]}
+    else:
+        return {"logged_in": False}
