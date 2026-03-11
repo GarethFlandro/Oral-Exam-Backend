@@ -4,7 +4,8 @@ from config.api_keys import SUPABASE_URL, SUPABASE_SERVICE_KEY
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-def get_teacher_classrooms(teacher_id: str) -> list[dict]:
+
+def p_get_teacher_classrooms(teacher_id: str) -> list[dict]:
     try:
         # Get classrooms for the specified teacher from Supabase
         response = supabase.table('classroom_teachers') \
@@ -17,7 +18,8 @@ def get_teacher_classrooms(teacher_id: str) -> list[dict]:
     except Exception as e:
         raise Exception(f"Error fetching teacher classrooms: {str(e)}")
 
-def get_student_classrooms(student_id: str) -> list[dict]:
+
+def p_get_student_classrooms(student_id: str) -> list[dict]:
     try:
         # Get classrooms for the specified student from Supabase
         response = supabase.table('classroom_students') \
@@ -30,7 +32,8 @@ def get_student_classrooms(student_id: str) -> list[dict]:
     except Exception as e:
         raise Exception(f"Error fetching student classrooms: {str(e)}")
 
-def get_student_assignments_by_classroom(student_id: str, classroom_id: str) -> list[dict]:
+
+def p_get_student_assignments_by_classroom(student_id: str, classroom_id: str) -> list[dict]:
     try:
         # Get assignments for the specified student and classroom from Supabase
         response = supabase.table('assignment_assigned_students') \
@@ -44,7 +47,8 @@ def get_student_assignments_by_classroom(student_id: str, classroom_id: str) -> 
     except Exception as e:
         raise Exception(f"Error fetching student assignments: {str(e)}")
 
-def get_classroom_students(classroom_id: str) -> list[dict]:
+
+def p_get_classroom_students(classroom_id: str) -> list[dict]:
     try:
         # Get students for the specified classroom from Supabase
         response = supabase.table('classroom_students') \
@@ -57,7 +61,8 @@ def get_classroom_students(classroom_id: str) -> list[dict]:
     except Exception as e:
         raise Exception(f"Error fetching classroom students: {str(e)}")
 
-def get_classroom_teachers(classroom_id: str) -> list[dict]:
+
+def p_get_classroom_teachers(classroom_id: str) -> list[dict]:
     try:
         # Get teachers for the specified classroom from Supabase
         response = supabase.table('classroom_teachers') \
@@ -70,7 +75,8 @@ def get_classroom_teachers(classroom_id: str) -> list[dict]:
     except Exception as e:
         raise Exception(f"Error fetching classroom teachers: {str(e)}")
 
-def get_assigned_students(assignment_id: str) -> list[dict]:
+
+def p_get_assigned_students(assignment_id: str) -> list[dict]:
     try:
         # Get assigned students for the specified assignment from Supabase
         response = supabase.table('assignment_assigned_students') \
@@ -83,7 +89,8 @@ def get_assigned_students(assignment_id: str) -> list[dict]:
     except Exception as e:
         raise Exception(f"Error fetching assigned students: {str(e)}")
 
-def get_student_completed_assignments_by_classroom(student_id: str, classroom_id: str) -> list[dict]:
+
+def p_get_student_completed_assignments_by_classroom(student_id: str, classroom_id: str) -> list[dict]:
     try:
         # Get completed assignments for the specified student and classroom from Supabase
         response = supabase.table('assignments') \

@@ -6,7 +6,6 @@ import zipfile
 from fastapi import APIRouter, UploadFile, Depends, Response, HTTPException, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import APIKeyHeader
-
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
@@ -64,7 +63,10 @@ async def analyze_exam(
     # Parse the question context JSON string into a dict
     question_context_dict: dict[str, str] = json.loads(question_context)
 
-    average_grade, gemini1_grade, claude1_grade, gemini2_grade, claude2_grade = await process_exam(audio_bytes, class_name, mime_type, question_context_dict)
+    average_grade, gemini1_grade, claude1_grade, gemini2_grade, claude2_grade = await process_exam(audio_bytes,
+                                                                                                   class_name,
+                                                                                                   mime_type,
+                                                                                                   question_context_dict)
 
     return {
         "grade": average_grade,
@@ -181,7 +183,7 @@ def login(response: Response, oauth_token: str):
     try:
         id_info = id_token.verify_oauth2_token(oauth_token, requests.Request(), OAUTH_CLIENT_ID)
     except Exception:
-         raise HTTPException(status_code=401, detail="Invalid OAuth token")
+        raise HTTPException(status_code=401, detail="Invalid OAuth token")
 
     email = id_info.get("email")
 
@@ -193,7 +195,7 @@ def login(response: Response, oauth_token: str):
 
     # Give the session ID to the user as a cookie and return API key to this db
     response.set_cookie(key="session_token", value=session_id)
-    return {"api_key": ORAL_EXAM_API_KEY}
+    response.set_cookie(key="API_KEY", value=ORAL_EXAM_API_KEY)
 
 
 @router.post("/logout", dependencies=[Depends(get_api_key)])
@@ -205,6 +207,7 @@ def logout(response: Response, session_token: str):
     # Tell the browser to delete the cookie
     response.delete_cookie("session_token")
     return {"message": "Logged out"}
+
 
 @router.post("/is-logged-in", dependencies=[Depends(get_api_key)])
 def is_logged_in(response: Response, session_token: str):
