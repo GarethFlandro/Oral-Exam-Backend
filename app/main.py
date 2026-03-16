@@ -20,8 +20,8 @@ from services.supabase import (
     p_assign_assignment_to_student, p_remove_assignment_from_student,
     p_get_assigned_students, p_get_student_assignments_by_classroom,
     # assignment submission n' completion
-    p_submit_assignment, p_mark_assignment_as_completed,
-    p_upload_assignment_files, p_get_student_completed_assignments_by_classroom,
+    p_mark_assignment_as_completed,
+    p_upload_assignment_submission, p_get_student_completed_assignments_by_classroom,
 )
 
 app = FastAPI(title="Oral Exam Backend")
@@ -38,23 +38,23 @@ async def create_classroom(classroom_name: str, teacher_email: str):
 
 
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
-async def rename_classroom(classroom_id: str, new_name: str):
-    p_rename_classroom(classroom_id, new_name)
+async def rename_classroom(classroom_name: str, new_name: str):
+    p_rename_classroom(classroom_name, new_name)
 
 
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
-async def delete_classroom(classroom_id: str):
-    p_delete_classroom(classroom_id)
+async def delete_classroom(classroom_name: str):
+    p_delete_classroom(classroom_name)
 
 
 @app.get("/api/supabase", dependencies=[Depends(get_api_key)])
-async def get_classroom_students(classroom_id: str):
-    p_get_classroom_students(classroom_id)
+async def get_classroom_students(classroom_name: str):
+    p_get_classroom_students(classroom_name)
 
 
 @app.get("/api/supabase", dependencies=[Depends(get_api_key)])
-async def get_classroom_teachers(classroom_id: str):
-    p_get_classroom_teachers(classroom_id)
+async def get_classroom_teachers(classroom_name: str):
+    p_get_classroom_teachers(classroom_name)
 
 
 # student CRUD
@@ -80,13 +80,13 @@ async def get_student_classrooms(student_email: str):
 
 # student - classroom mapping
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
-async def add_student_to_classroom(student_email: str, classroom_id: str):
-    p_add_student_to_classroom(student_email, classroom_id)
+async def add_student_to_classroom(student_email: str, classroom_name: str):
+    p_add_student_to_classroom(student_email, classroom_name)
 
 
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
-async def remove_student_from_classroom(student_email: str, classroom_id: str):
-    p_remove_student_from_classroom(student_email, classroom_id)
+async def remove_student_from_classroom(student_email: str, classroom_name: str):
+    p_remove_student_from_classroom(student_email, classroom_name)
 
 
 # teachers
@@ -97,8 +97,8 @@ async def get_teacher_classrooms(teacher_email: str):
 
 # assignment CRUD
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
-async def create_assignment(assignment_id: str, classroom_id: str, title: str, due_date: str, questions: dict[str, str]):
-    p_create_assignment(assignment_id, classroom_id, title, due_date, questions)
+async def create_assignment(assignment_id: str, classroom_name: str, title: str, due_date: str, questions: dict[str, str]):
+    p_create_assignment(assignment_id, classroom_name, title, due_date, questions)
 
 
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
@@ -128,16 +128,11 @@ async def get_assigned_students(assignment_id: str):
 
 
 @app.get("/api/supabase", dependencies=[Depends(get_api_key)])
-async def get_student_assignments_by_classroom(student_email: str, classroom_id: str):
-    p_get_student_assignments_by_classroom(student_email, classroom_id)
+async def get_student_assignments_by_classroom(student_email: str, classroom_name: str):
+    p_get_student_assignments_by_classroom(student_email, classroom_name)
 
 
 # assignment submission
-@app.post("/api/supabase", dependencies=[Depends(get_api_key)])
-async def submit_assignment(student_email: str, assignment_id: str):
-    p_submit_assignment(student_email, assignment_id)
-
-
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
 async def mark_assignment_as_completed(student_email: str, assignment_id: str):
     p_mark_assignment_as_completed(student_email, assignment_id)
@@ -145,7 +140,7 @@ async def mark_assignment_as_completed(student_email: str, assignment_id: str):
 
 @app.post("/api/supabase", dependencies=[Depends(get_api_key)])
 async def upload_assignment_files(student_email: str, assignment_id: str, files: list[bytes], score: int):
-    p_upload_assignment_files(student_email, assignment_id, files, score)
+    p_upload_assignment_submission(student_email, assignment_id, files, score)
 
 
 @app.get("/api/supabase", dependencies=[Depends(get_api_key)])
