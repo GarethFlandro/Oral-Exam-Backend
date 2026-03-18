@@ -210,7 +210,7 @@ def logout(response: Response, session_token: str):
 
 
 @router.post("/is-logged-in", dependencies=[Depends(get_api_key)])
-def is_logged_in(response: Response, session_token: str):
+def is_logged_in(session_token: str):
     if session_token in logged_in_users:
         return {"logged_in": True, "email": logged_in_users[session_token]}
     else:
