@@ -341,7 +341,7 @@ def p_remove_student_from_classroom(student_email: str, classroom_name: str):
 
 
 # assignment CRUD
-def p_create_assignment(assignment_id: str, classroom_name: str, title: str, due_date: str):
+def p_create_assignment(assignment_id: str, classroom_name: str, title: str, due_date: str, questions: dict[str, str]):
     try:
         classrooms = supabase.table('classrooms') \
             .select('classroom_name') \
@@ -367,6 +367,13 @@ def p_create_assignment(assignment_id: str, classroom_name: str, title: str, due
             'classroom_name': classroom_name,
             'title': title,
             'due_date': due_date
+        }) \
+            .execute()
+
+        supabase.table('questions') \
+            .insert({
+            # turn questions into list[dict[str, str]], then add assignment_id to each row being added (sorry)
+            [{**d, 'assignment_id': assignment_id} for d in [{'': k, 'B': v} for k, v in questions.items()]]
         }) \
             .execute()
 
