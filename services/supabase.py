@@ -156,7 +156,7 @@ def p_create_classroom(classroom_name: str, teacher_email: str):
 
         # Create a new classroom in Supabase
         supabase.table('classrooms') \
-            .insert({'name': classroom_name}) \
+            .insert({'classroom_name': classroom_name}) \
             .execute()
 
         supabase.table('classroom_teachers') \
