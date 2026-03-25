@@ -2,6 +2,8 @@ from supabase import create_client, Client
 
 from config.api_keys import SUPABASE_URL, SUPABASE_SERVICE_KEY
 
+import time
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 
@@ -162,6 +164,8 @@ def p_create_classroom(classroom_name: str, teacher_email: str):
                 .execute()
         except Exception:
             pass # teacher already exists and nothing needs to happen
+
+        time.sleep(5)
 
         # Create a new classroom in Supabase
         supabase.table('classrooms') \
