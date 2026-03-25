@@ -109,7 +109,7 @@ def p_get_assigned_students(assignment_id: str) -> list[str]:
         raise Exception(f"Error fetching assigned students: {str(e)}")
 
 
-def p_get_student_completed_assignments_by_classroom(student_email: str, classroom_name:str) -> list[str]:
+def p_get_student_completed_assignments_by_classroom(student_email: str, classroom_name: str) -> list[str]:
     try:
         # Get completed assignments for the specified student and classroom from Supabase
         response = supabase.table('assignments_completed_students') \
@@ -143,6 +143,7 @@ def p_get_assignments_by_classroom(classroom_name: str) -> list[str]:
     except Exception as e:
         raise Exception(f"Error fetching classroom assignments: {str(e)}")
 
+
 # classroom CRUD
 def p_create_classroom(classroom_name: str, teacher_email: str):
     try:
@@ -154,9 +155,17 @@ def p_create_classroom(classroom_name: str, teacher_email: str):
         if classrooms.data:
             raise Exception(f"Classroom with name '{classroom_name}' already exists.")
 
+        # noinspection PyBroadException
+        try:
+            supabase.table('teachers') \
+                .insert({'teacher_email': teacher_email}) \
+                .execute()
+        except Exception:
+            pass # teacher already exists and nothing needs to happen
+
         # Create a new classroom in Supabase
         supabase.table('classrooms') \
-            .insert({'name': classroom_name}) \
+            .insert({'classroom_name': classroom_name}) \
             .execute()
 
         supabase.table('classroom_teachers') \
@@ -476,6 +485,7 @@ def p_remove_assignment_from_student(assignment_id: str, student_email: str):
 
     except Exception as e:
         raise Exception(f"Error creating student: {str(e)}")
+
 
 # assignment submission
 def p_mark_assignment_as_completed(student_email: str, assignment_id: str):
