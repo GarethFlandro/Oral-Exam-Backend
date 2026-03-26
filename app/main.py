@@ -1,4 +1,5 @@
 import uvicorn
+import uuid
 from fastapi import FastAPI, Depends
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
@@ -112,7 +113,7 @@ async def get_teacher_classrooms(teacher_email: str):
 # assignment CRUD
 @app.post("/supabase/create_assignment", dependencies=[Depends(get_api_key)])
 async def create_assignment(classroom_name: str, title: str, due_date: str, questions: dict[str, str],
-                            assignment_id: str | None = None):
+                            assignment_id: str = uuid.uuid4()):
     p_create_assignment(assignment_id, classroom_name, title, due_date, questions)
 
 
