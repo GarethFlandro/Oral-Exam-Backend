@@ -1,5 +1,7 @@
 import uvicorn
 import uuid
+from pydantic import BaseModel, Field
+
 from fastapi import FastAPI, Depends
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,19 +49,30 @@ app.add_middleware(
 
 
 # classroom CRUD
-@app.post("/supabase/create_classroom", dependencies=[Depends(get_api_key)])
-async def create_classroom(classroom_name: str, teacher_email: str):
-    p_create_classroom(classroom_name, teacher_email)
+class CreateClassroomModel(BaseModel):
+    classroom_name: str
+    teacher_email: str
 
+@app.post("/supabase/create_classroom", dependencies=[Depends(get_api_key)])
+async def create_classroom(model: CreateClassroomModel):
+    p_create_classroom(model.classroom_name, model.teacher_email)
+
+
+class RenameClassroomModel(BaseModel):
+    classroom_name: str
+    new_name: str
 
 @app.post("/supabase/rename_classroom", dependencies=[Depends(get_api_key)])
-async def rename_classroom(classroom_name: str, new_name: str):
-    p_rename_classroom(classroom_name, new_name)
+async def rename_classroom(model: RenameClassroomModel):
+    p_rename_classroom(model.classroom_name, model.new_name)
 
+
+class DeleteClassroomModel(BaseModel):
+    classroom_name: str
 
 @app.post("/supabase/delete_classroom", dependencies=[Depends(get_api_key)])
-async def delete_classroom(classroom_name: str):
-    p_delete_classroom(classroom_name)
+async def delete_classroom(model: DeleteClassroomModel):
+    p_delete_classroom(model.classroom_name)
 
 
 @app.get("/supabase/get_classroom_students", dependencies=[Depends(get_api_key)])
@@ -73,19 +86,30 @@ async def get_classroom_teachers(classroom_name: str):
 
 
 # student CRUD
-@app.post("/supabase/create_student", dependencies=[Depends(get_api_key)])
-async def create_student(student_email: str, student_name: str):
-    p_create_student(student_email, student_name)
+class CreateStudentModel(BaseModel):
+    student_email: str
+    student_name: str
 
+@app.post("/supabase/create_student", dependencies=[Depends(get_api_key)])
+async def create_student(model: CreateStudentModel):
+    p_create_student(model.student_email, model.student_name)
+
+
+class RenameStudentModel(BaseModel):
+    student_email: str
+    new_name: str
 
 @app.post("/supabase/rename_student", dependencies=[Depends(get_api_key)])
-async def rename_student(student_email: str, new_name: str):
-    p_rename_student(student_email, new_name)
+async def rename_student(model: RenameStudentModel):
+    p_rename_student(model.student_email, model.new_name)
 
+
+class DeleteStudentModel(BaseModel):
+    student_email: str
 
 @app.post("/supabase/delete_student", dependencies=[Depends(get_api_key)])
-async def delete_student(student_email: str):
-    p_delete_student(student_email)
+async def delete_student(model: DeleteStudentModel):
+    p_delete_student(model.student_email)
 
 
 @app.get("/supabase/get_student_classrooms", dependencies=[Depends(get_api_key)])
@@ -94,14 +118,22 @@ async def get_student_classrooms(student_email: str):
 
 
 # student - classroom mapping
-@app.post("/supabase/add_student_to_classroom", dependencies=[Depends(get_api_key)])
-async def add_student_to_classroom(student_email: str, classroom_name: str):
-    p_add_student_to_classroom(student_email, classroom_name)
+class AddStudentToClassroomModel(BaseModel):
+    student_email: str
+    classroom_name: str
 
+@app.post("/supabase/add_student_to_classroom", dependencies=[Depends(get_api_key)])
+async def add_student_to_classroom(model: AddStudentToClassroomModel):
+    p_add_student_to_classroom(model.student_email, model.classroom_name)
+
+
+class RemoveStudentFromClassroomModel(BaseModel):
+    student_email: str
+    classroom_name: str
 
 @app.post("/supabase/remove_student_from_classroom", dependencies=[Depends(get_api_key)])
-async def remove_student_from_classroom(student_email: str, classroom_name: str):
-    p_remove_student_from_classroom(student_email, classroom_name)
+async def remove_student_from_classroom(model: RemoveStudentFromClassroomModel):
+    p_remove_student_from_classroom(model.student_email, model.classroom_name)
 
 
 # teachers
@@ -111,31 +143,52 @@ async def get_teacher_classrooms(teacher_email: str):
 
 
 # assignment CRUD
-@app.post("/supabase/create_assignment", dependencies=[Depends(get_api_key)])
-async def create_assignment(classroom_name: str, title: str, due_date: str, questions: dict[str, str],
-                            assignment_id: str = uuid.uuid4()):
-    p_create_assignment(assignment_id, classroom_name, title, due_date, questions)
+class CreateAssignmentModel(BaseModel):
+    classroom_name: str
+    title: str
+    due_date: str
+    questions: dict[str, str]
+    assignment_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
+@app.post("/supabase/create_assignment", dependencies=[Depends(get_api_key)])
+async def create_assignment(model: CreateAssignmentModel):
+    p_create_assignment(model.assignment_id, model.classroom_name, model.title, model.due_date, model.questions)
+
+
+class RenameAssignmentModel(BaseModel):
+    assignment_id: str
+    new_title: str
 
 @app.post("/supabase/rename_assignment", dependencies=[Depends(get_api_key)])
-async def rename_assignment(assignment_id: str, new_title: str):
-    p_rename_assignment(assignment_id, new_title)
+async def rename_assignment(model: RenameAssignmentModel):
+    p_rename_assignment(model.assignment_id, model.new_title)
 
+
+class DeleteAssignmentModel(BaseModel):
+    assignment_id: str
 
 @app.post("/supabase/delete_assignment", dependencies=[Depends(get_api_key)])
-async def delete_assignment(assignment_id: str):
-    p_delete_assignment(assignment_id)
+async def delete_assignment(model: DeleteAssignmentModel):
+    p_delete_assignment(model.assignment_id)
 
 
 # assignment - student mapping
-@app.post("/supabase/assign_assignment_to_student", dependencies=[Depends(get_api_key)])
-async def assign_assignment_to_student(assignment_id: str, student_email: str):
-    p_assign_assignment_to_student(assignment_id, student_email)
+class AssignAssignmentToStudentModel(BaseModel):
+    assignment_id: str
+    student_email: str
 
+@app.post("/supabase/assign_assignment_to_student", dependencies=[Depends(get_api_key)])
+async def assign_assignment_to_student(model: AssignAssignmentToStudentModel):
+    p_assign_assignment_to_student(model.assignment_id, model.student_email)
+
+
+class RemoveAssignmentFromStudentModel(BaseModel):
+    assignment_id: str
+    student_email: str
 
 @app.post("/supabase/remove_assignment_from_student", dependencies=[Depends(get_api_key)])
-async def remove_assignment_from_student(assignment_id: str, student_email: str):
-    p_remove_assignment_from_student(assignment_id, student_email)
+async def remove_assignment_from_student(model: RemoveAssignmentFromStudentModel):
+    p_remove_assignment_from_student(model.assignment_id, model.student_email)
 
 
 @app.get("/supabase/get_assigned_students", dependencies=[Depends(get_api_key)])
@@ -149,14 +202,24 @@ async def get_student_assignments_by_classroom(student_email: str, classroom_nam
 
 
 # assignment submission
-@app.post("/supabase/mark_assignment_as_completed", dependencies=[Depends(get_api_key)])
-async def mark_assignment_as_completed(student_email: str, assignment_id: str):
-    p_mark_assignment_as_completed(student_email, assignment_id)
+class MarkAssignmentAsCompletedModel(BaseModel):
+    student_email: str
+    assignment_id: str
 
+@app.post("/supabase/mark_assignment_as_completed", dependencies=[Depends(get_api_key)])
+async def mark_assignment_as_completed(model: MarkAssignmentAsCompletedModel):
+    p_mark_assignment_as_completed(model.student_email, model.assignment_id)
+
+
+class UploadAssignmentFilesModel(BaseModel):
+    student_email: str
+    assignment_id: str
+    files: list[bytes]
+    score: int
 
 @app.post("/supabase/upload_assignment_files", dependencies=[Depends(get_api_key)])
-async def upload_assignment_files(student_email: str, assignment_id: str, files: list[bytes], score: int):
-    p_upload_assignment_submission(student_email, assignment_id, files, score)
+async def upload_assignment_files(model: UploadAssignmentFilesModel):
+    p_upload_assignment_submission(model.student_email, model.assignment_id, model.files, model.score)
 
 
 @app.get("/supabase/get_student_completed_assignments_by_classroom", dependencies=[Depends(get_api_key)])
