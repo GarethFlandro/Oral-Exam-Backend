@@ -30,6 +30,19 @@ api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
 
 app.include_router(router)
 
+origins = [
+    "http://localhost:63344",
+    "https://localhost:63345"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # classroom CRUD
 @app.post("/supabase/create_classroom", dependencies=[Depends(get_api_key)])
@@ -97,7 +110,8 @@ async def get_teacher_classrooms(teacher_email: str):
 
 # assignment CRUD
 @app.post("/supabase/create_assignment", dependencies=[Depends(get_api_key)])
-async def create_assignment(classroom_name: str, title: str, due_date: str, questions: dict[str, str], assignment_id: str | None = None, ):
+async def create_assignment(classroom_name: str, title: str, due_date: str, questions: dict[str, str],
+                            assignment_id: str | None = None):
     p_create_assignment(assignment_id, classroom_name, title, due_date, questions)
 
 
