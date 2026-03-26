@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, Depends
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router, get_api_key
 from services.supabase import (
