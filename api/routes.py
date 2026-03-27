@@ -16,7 +16,7 @@ from services.voice_transcripts import generate_speech
 
 router = APIRouter()
 
-api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
+api_key_header = APIKeyHeader(name="ORAL_EXAM_API_KEY", auto_error=True)
 
 
 def get_api_key(api_key: str = Depends(api_key_header)):
