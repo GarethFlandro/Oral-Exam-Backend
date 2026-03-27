@@ -3,6 +3,7 @@ from supabase import create_client, Client
 from config.api_keys import SUPABASE_URL, SUPABASE_SERVICE_KEY
 
 import time
+import uuid
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
@@ -383,12 +384,21 @@ def p_create_assignment(assignment_id: str, classroom_name: str, title: str, due
         }) \
             .execute()
 
-        supabase.table('questions') \
-            .insert({
-            # turn questions into list[dict[str, str]], then add assignment_id to each row being added (sorry)
-            [{**d, 'assignment_id': assignment_id} for d in [{'': k, 'B': v} for k, v in questions.items()]]
-        }) \
-            .execute()
+        question_rows = [
+            {
+                'question_id': str(uuid.uuid4()),
+                'assignment_id': assignment_id,
+                'question_text': question_text,
+                'grading_notes': grading_notes
+            }
+            for question_text, grading_notes in questions.items()
+        ]
+
+        if question_rows:
+            supabase.table('questions') \
+                .insert(question_rows) \
+                .execute()
+
 
     except Exception as e:
         raise Exception(f"Error creating student: {str(e)}")

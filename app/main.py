@@ -1,10 +1,10 @@
-import uvicorn
 import uuid
-from pydantic import BaseModel, Field
 
+import uvicorn
 from fastapi import FastAPI, Depends
-from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
+from pydantic import BaseModel, Field
 
 from api.routes import router, get_api_key
 from services.supabase import (
@@ -61,6 +61,7 @@ class CreateClassroomModel(BaseModel):
     classroom_name: str
     teacher_email: str
 
+
 @app.post("/supabase/create_classroom", dependencies=[Depends(get_api_key)])
 async def create_classroom(model: CreateClassroomModel):
     p_create_classroom(model.classroom_name, model.teacher_email)
@@ -70,6 +71,7 @@ class RenameClassroomModel(BaseModel):
     classroom_name: str
     new_name: str
 
+
 @app.post("/supabase/rename_classroom", dependencies=[Depends(get_api_key)])
 async def rename_classroom(model: RenameClassroomModel):
     p_rename_classroom(model.classroom_name, model.new_name)
@@ -77,6 +79,7 @@ async def rename_classroom(model: RenameClassroomModel):
 
 class DeleteClassroomModel(BaseModel):
     classroom_name: str
+
 
 @app.post("/supabase/delete_classroom", dependencies=[Depends(get_api_key)])
 async def delete_classroom(model: DeleteClassroomModel):
@@ -98,6 +101,7 @@ class CreateStudentModel(BaseModel):
     student_email: str
     student_name: str
 
+
 @app.post("/supabase/create_student", dependencies=[Depends(get_api_key)])
 async def create_student(model: CreateStudentModel):
     p_create_student(model.student_email, model.student_name)
@@ -107,6 +111,7 @@ class RenameStudentModel(BaseModel):
     student_email: str
     new_name: str
 
+
 @app.post("/supabase/rename_student", dependencies=[Depends(get_api_key)])
 async def rename_student(model: RenameStudentModel):
     p_rename_student(model.student_email, model.new_name)
@@ -114,6 +119,7 @@ async def rename_student(model: RenameStudentModel):
 
 class DeleteStudentModel(BaseModel):
     student_email: str
+
 
 @app.post("/supabase/delete_student", dependencies=[Depends(get_api_key)])
 async def delete_student(model: DeleteStudentModel):
@@ -130,6 +136,7 @@ class AddStudentToClassroomModel(BaseModel):
     student_email: str
     classroom_name: str
 
+
 @app.post("/supabase/add_student_to_classroom", dependencies=[Depends(get_api_key)])
 async def add_student_to_classroom(model: AddStudentToClassroomModel):
     p_add_student_to_classroom(model.student_email, model.classroom_name)
@@ -138,6 +145,7 @@ async def add_student_to_classroom(model: AddStudentToClassroomModel):
 class RemoveStudentFromClassroomModel(BaseModel):
     student_email: str
     classroom_name: str
+
 
 @app.post("/supabase/remove_student_from_classroom", dependencies=[Depends(get_api_key)])
 async def remove_student_from_classroom(model: RemoveStudentFromClassroomModel):
@@ -156,16 +164,21 @@ class CreateAssignmentModel(BaseModel):
     title: str
     due_date: str
     questions: dict[str, str]
-    assignment_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    assignment_id: str = ""
+
 
 @app.post("/supabase/create_assignment", dependencies=[Depends(get_api_key)])
 async def create_assignment(model: CreateAssignmentModel):
+    if not model.assignment_id:
+        model.assignment_id = str(uuid.uuid4())
+
     p_create_assignment(model.assignment_id, model.classroom_name, model.title, model.due_date, model.questions)
 
 
 class RenameAssignmentModel(BaseModel):
     assignment_id: str
     new_title: str
+
 
 @app.post("/supabase/rename_assignment", dependencies=[Depends(get_api_key)])
 async def rename_assignment(model: RenameAssignmentModel):
@@ -174,6 +187,7 @@ async def rename_assignment(model: RenameAssignmentModel):
 
 class DeleteAssignmentModel(BaseModel):
     assignment_id: str
+
 
 @app.post("/supabase/delete_assignment", dependencies=[Depends(get_api_key)])
 async def delete_assignment(model: DeleteAssignmentModel):
@@ -185,6 +199,7 @@ class AssignAssignmentToStudentModel(BaseModel):
     assignment_id: str
     student_email: str
 
+
 @app.post("/supabase/assign_assignment_to_student", dependencies=[Depends(get_api_key)])
 async def assign_assignment_to_student(model: AssignAssignmentToStudentModel):
     p_assign_assignment_to_student(model.assignment_id, model.student_email)
@@ -193,6 +208,7 @@ async def assign_assignment_to_student(model: AssignAssignmentToStudentModel):
 class RemoveAssignmentFromStudentModel(BaseModel):
     assignment_id: str
     student_email: str
+
 
 @app.post("/supabase/remove_assignment_from_student", dependencies=[Depends(get_api_key)])
 async def remove_assignment_from_student(model: RemoveAssignmentFromStudentModel):
@@ -214,6 +230,7 @@ class MarkAssignmentAsCompletedModel(BaseModel):
     student_email: str
     assignment_id: str
 
+
 @app.post("/supabase/mark_assignment_as_completed", dependencies=[Depends(get_api_key)])
 async def mark_assignment_as_completed(model: MarkAssignmentAsCompletedModel):
     p_mark_assignment_as_completed(model.student_email, model.assignment_id)
@@ -224,6 +241,7 @@ class UploadAssignmentFilesModel(BaseModel):
     assignment_id: str
     files: list[bytes]
     score: int
+
 
 @app.post("/supabase/upload_assignment_files", dependencies=[Depends(get_api_key)])
 async def upload_assignment_files(model: UploadAssignmentFilesModel):
