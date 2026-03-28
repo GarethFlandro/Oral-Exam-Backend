@@ -9,7 +9,7 @@ from fastapi.security import APIKeyHeader
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from config.api_keys import ORAL_EXAM_API_KEY, OAUTH_CLIENT_ID, STATIC_API_KEY
+from config.api_keys import ORAL_EXAM_API_KEY, OAUTH_CLIENT_ID
 from services.anticheat import detect_cheating
 from services.exam_service import process_exam
 from services.voice_transcripts import generate_speech
@@ -20,7 +20,7 @@ api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
 
 
 def get_api_key(api_key: str = Depends(api_key_header)):
-    if api_key == STATIC_API_KEY:
+    if api_key == ORAL_EXAM_API_KEY:
         return api_key
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
@@ -181,6 +181,7 @@ logged_in_users = {}
 @router.post("/login")
 def login(response: Response, oauth_token: str):
     try:
+        # noinspection PyTypeChecker
         id_info = id_token.verify_oauth2_token(oauth_token, requests.Request(), OAUTH_CLIENT_ID)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid OAuth token")

@@ -196,13 +196,14 @@ async def delete_assignment(model: DeleteAssignmentModel):
 
 # assignment - student mapping
 class AssignAssignmentToStudentModel(BaseModel):
+    classroom_name: str
     assignment_id: str
     student_email: str
 
 
 @app.post("/supabase/assign_assignment_to_student", dependencies=[Depends(get_api_key)])
 async def assign_assignment_to_student(model: AssignAssignmentToStudentModel):
-    p_assign_assignment_to_student(model.assignment_id, model.student_email)
+    p_assign_assignment_to_student(model.classroom_name, model.assignment_id, model.student_email)
 
 
 class RemoveAssignmentFromStudentModel(BaseModel):
