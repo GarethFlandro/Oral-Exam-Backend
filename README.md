@@ -309,12 +309,6 @@ Run the full suite:
 python -m pytest
 ```
 
-Run only backend API tests:
-
-```bash
-python -m pytest tests/test_main.py
-```
-
 Run with verbose output and stop on first failure:
 ```bash
 python -m pytest -q tests/test_main.py -x --maxfail=1
