@@ -14,7 +14,7 @@ FastAPI backend for oral exam workflows:
 ### 1) Clone repository
 
 ```bash
-git clone <your-repo-url>
+git clone "https://github.com/GarethFlandro/Oral-Exam-Backend/"
 cd Oral-Exam-Backend
 ```
 
