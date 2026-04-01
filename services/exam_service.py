@@ -27,7 +27,7 @@ claude_client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 def read_prompt(filename: str) -> str:
     """Read a prompt file from the prompts directory."""
     prompt_path = PROMPTS_DIR / filename
-    with open(prompt_path, "r", encoding="utf-8") as f:
+    with open(prompt_path, "w", encoding="utf-8") as f:
         return f.read()
 
 
