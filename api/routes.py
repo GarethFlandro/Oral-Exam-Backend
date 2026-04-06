@@ -207,6 +207,7 @@ def logout(response: Response, session_token: str):
 
     # Tell the browser to delete the cookie
     response.delete_cookie("session_token")
+    response.delete_cookie("API_KEY")
     return {"message": "Logged out"}
 
 
