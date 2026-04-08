@@ -27,14 +27,14 @@ claude_client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
 def read_prompt(filename: str) -> str:
     """Read a prompt file from the prompts directory."""
     prompt_path = PROMPTS_DIR / filename
-    with open(prompt_path, "w", encoding="utf-8") as f:
+    with open(prompt_path, "r", encoding="utf-8") as f:
         return f.read()
 
 
 def write_file(filename: str, content: str):
     """Write content to a file in the prompts directory."""
     file_path = Path(__file__).parent.parent / "responses" / filename
-    with open(file_path, "r+", encoding="utf-8") as f:
+    with open(file_path, "w+", encoding="utf-8") as f:
         f.write(content)
 
 

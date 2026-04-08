@@ -1,15 +1,11 @@
 **SECTION 1: PEER REVIEW AUDIT**
-*   **Valid Points (Incorporated):**
-    *   The student's use of the phrase "skip math rules" is a significant conceptual error. Limits represent a rigorous framework, not an evasion of algebraic rules.
-    *   The definition of a limit as "what a value is equal to" is circular and lacks the necessary distinction between the function's value $f(c)$ and the limit $L$.
-    *   The lack of formal language (e.g., "approaching from the left/right" or "$y$-value") is below the expected standard for AP Calculus AB.
-*   **Invalid/Rejected Points:**
-    *   The Peer Examiner stated the student shows "minimal understanding of why limits are useful." This is rejected. The student specifically identifies that limits are used for "discontinuities" and "when a function doesn't exist somewhere." This identifies the primary utility of limits in the AP curriculum (handling removable discontinuities/holes), even if the terminology used to describe it ("ignore the function not existing") was imprecise.
+* **Valid Points (Incorporated):** The Peer Examiner correctly identified the student's perfect grammatical structures ("j'ai" for age, "je suis en" for grade level). The observation regarding the student's use of "en première" is particularly astute, as it shows a high level of cultural/vocabulary awareness (equivalent to 11th grade in the French system). The slight deduction for accent is accepted only because of the teacher's specific instruction to prioritize accent in grading.
+* **Invalid/Rejected Points:** The Peer Examiner described the accent as "serviceable" and "not poor," yet still applied a deduction. While I agree with the score, I reject the implication that the student's accent was an issue; for a French 2 level, the student's phonetic accuracy (nasal vowels in "ans" and "en," and the "r" in "première") was actually quite high. However, to align with the teacher's specific grading caveat regarding accent, a perfect score is withheld to account for non-native phonetic markers.
 
 **SECTION 2: FINAL EVALUATION**
-*   **Factual Accuracy:** Poor to Fair. The student correctly identifies the "approaching" mechanism and the application to discontinuities. However, the claim that one "skips math rules" is a fundamental misunderstanding of calculus as a discipline of rigor.
-*   **Depth & Understanding:** Minimal. While the student understands the *utility* of a limit (finding a value at a hole), they fail to explain *how* it works (the behavior of $f(x)$ as $x$ approaches $c$). They rely on a "workaround" intuition rather than a mathematical one.
-*   **Clarity:** Low. The explanation is heavily reliant on "street math" terms rather than the technical vocabulary required for the AP Calculus AB exam (e.g., indeterminate forms, limits from the left/right, or continuity).
+* **Factual Accuracy:** Excellent. The student provided all three requested pieces of information (Name: Garrett, Age: 17, Year: Première).
+* **Depth & Understanding:** High. The student correctly used the verb "avoir" (j'ai) for age and "être" (je suis) for school status, which are common areas of confusion in French 2. The use of "première" instead of a literal translation of "11th grade" shows superior understanding.
+* **Clarity:** Very high. The student spoke with confidence and a natural pace. The accent is clear and easily understood by a native speaker.
 
 **SECTION 3: FINAL SCORE**
-**Final Grade: 45/100**
+**Final Grade: 95/100**
