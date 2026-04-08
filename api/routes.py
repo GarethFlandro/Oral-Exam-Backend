@@ -14,6 +14,8 @@ from services.anticheat import detect_cheating
 from services.exam_service import process_exam
 from services.voice_transcripts import generate_speech
 
+from pydantic import BaseModel
+
 router = APIRouter()
 
 api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
@@ -177,12 +179,14 @@ async def generate_speech_endpoint(
 # List of active users (in-memory, we don't really care if everyone is logged out when the server restarts)
 logged_in_users = {}
 
+class LoginRequest(BaseModel):
+    oauth_token: str
 
 @router.post("/login")
-def login(response: Response, oauth_token: str):
+def login(response: Response, login_request: LoginRequest):
     try:
         # noinspection PyTypeChecker
-        id_info = id_token.verify_oauth2_token(oauth_token, requests.Request(), OAUTH_CLIENT_ID)
+        id_info = id_token.verify_oauth2_token(login_request.oauth_token, requests.Request(), OAUTH_CLIENT_ID)
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid OAuth token")
 
