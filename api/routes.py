@@ -199,9 +199,9 @@ def login(response: Response, login_request: LoginRequest):
     logged_in_users[session_id] = email
 
     # Give the session ID to the user as a cookie and return API key to this db
-    response.set_cookie(key="session_token", value=session_id)
-    response.set_cookie(key="API_KEY", value=ORAL_EXAM_API_KEY)
-
+    response.set_cookie(key="session_token", value=session_id, httponly=False)
+    response.set_cookie(key="API_KEY", value=ORAL_EXAM_API_KEY, httponly=False)
+    return True
 
 @router.post("/logout", dependencies=[Depends(get_api_key)])
 def logout(response: Response, session_token: str):
