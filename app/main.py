@@ -38,7 +38,7 @@ origins = [
     "http://localhost:63340",
     "http://localhost:63341",
     "http://localhost:63342",
-    "http://localhost:63343"
+    "http://localhost:63343",
     "http://localhost:63344",
     "http://localhost:63345",
     "http://localhost:63346",
