@@ -35,16 +35,16 @@ api_key_header = APIKeyHeader(name="API_KEY", auto_error=True)
 app.include_router(router)
 
 origins = [
-    "http://localhost:63340"
-    "http://localhost:63341"
-    "http://localhost:63342"
+    "http://localhost:63340",
+    "http://localhost:63341",
+    "http://localhost:63342",
     "http://localhost:63343"
     "http://localhost:63344",
-    "http://localhost:63345"
-    "http://localhost:63346"
-    "http://localhost:63347"
-    "http://localhost:63348"
-    "http://localhost:63349"
+    "http://localhost:63345",
+    "http://localhost:63346",
+    "http://localhost:63347",
+    "http://localhost:63348",
+    "http://localhost:63349",
 ]
 
 app.add_middleware(
