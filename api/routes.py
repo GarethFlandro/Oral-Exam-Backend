@@ -198,12 +198,12 @@ def login(response: Response, login_request: LoginRequest):
     # Add to list
     logged_in_users[session_id] = email
 
-    is_teacher = email[:1].isdigit()
+    is_teacher = not (email[:1].isdigit())
 
     # Give the session ID to the user as a cookie and return API key to this db
     response.set_cookie(key="session_token", value=session_id, httponly=False, samesite="none", secure=True, path="/")
     response.set_cookie(key="API_KEY", value=ORAL_EXAM_API_KEY, httponly=False, samesite="none", secure=True, path="/")
-    response.set_cookie(key="isTeacher", value=is_teacher, httponly=False, samesite="none", secure=True, path="/")
+    response.set_cookie(key="isTeacher", value=str(is_teacher), httponly=False, samesite="none", secure=True, path="/")
 
     return True
 
