@@ -30,7 +30,7 @@ def get_api_key(api_key: str = Depends(api_key_header)):
     )
 
 
-@router.post("/analyze-exam", dependencies=[Depends(get_api_key)])
+@router.post("/analyze-exam")
 async def analyze_exam(
         audio: UploadFile,
         class_name: str,
