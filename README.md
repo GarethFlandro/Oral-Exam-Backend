@@ -64,6 +64,14 @@ API docs will be available at:
 - `http://localhost:8080/docs`
 - `http://localhost:8080/redoc`
 
+A static version of this project is available at: </br>
+```https://oral-exam-backend-307630687354.northamerica-northeast1.run.app/docs```
+
+Photo of endpoints available to call:
+![Screenshot 2026-04-30 130739.png](img/Screenshot%202026-04-30%20130739.png)
+
+Photo of /analyze-exam endpoint on docs (main endpoint):
+![Screenshot 2026-04-30 130748.png](img/Screenshot%202026-04-30%20130748.png)
 ---
 
 ## Docker
@@ -317,3 +325,8 @@ python -m pytest -q tests/test_main.py -x --maxfail=1
 
 If tests fail, compare expected request/response schemas with `app/main.py` and `api/routes.py`.
 
+---
+
+## AI Disclosure
+
+AI was used to develop a framework for this project and assist with debugging MANY times throughout the project.
